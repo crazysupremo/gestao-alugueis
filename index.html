@@ -641,6 +641,17 @@ let currentPin = null;
 
 function uid(){ return Math.random().toString(36).slice(2,9); }
 
+// Retorna "YYYY-MM-DD" usando a data LOCAL (não UTC). Importante: `date.toISOString().slice(0,10)`
+// converte pra UTC antes de cortar a data — em fusos à frente de UTC (ex: Portugal/Espanha no
+// horário de verão), a meia-noite local do dia 1 vira ainda o dia 31 do mês anterior em UTC,
+// fazendo o "mês atual" incluir por engano um dia (ou mais) do mês passado. Essa função evita isso.
+function dataLocalISO(date){
+  const y = date.getFullYear();
+  const m = String(date.getMonth()+1).padStart(2,'0');
+  const d = String(date.getDate()).padStart(2,'0');
+  return `${y}-${m}-${d}`;
+}
+
 /* =========================================================
    Assistente de IA (Gemini) — chat de dúvidas + análise de candidatura
    (usado apenas no modo candidato, ?entrevista=1)
@@ -1117,8 +1128,8 @@ function acaoRemoverVaga(tituloVaga){
 
 function acaoGerarRelatorio(tipo){
   const now = new Date();
-  const inicioMes = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0,10);
-  const hojeStr = now.toISOString().slice(0,10);
+  const inicioMes = dataLocalISO(new Date(now.getFullYear(), now.getMonth(), 1));
+  const hojeStr = dataLocalISO(now);
   const mesStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
 
   if (tipo === 'alugueis'){
@@ -1250,8 +1261,8 @@ function currentAdminContext(){
   const imoveisCliente = state.imoveis.filter(im => idsEmpresasCliente.has(im.empresaId));
 
   const now = new Date();
-  const inicioMes = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0,10);
-  const hojeStr = now.toISOString().slice(0,10);
+  const inicioMes = dataLocalISO(new Date(now.getFullYear(), now.getMonth(), 1));
+  const hojeStr = dataLocalISO(now);
 
   let ctx = `Cliente ativo: ${clienteAtivo ? clienteAtivo.nome : '—'}.\n`;
   ctx += `Empresas subcontratadas (${empresasCliente.length}): ${empresasCliente.map(e=>e.nome).join(', ') || 'nenhuma'}.\n\n`;
@@ -1749,7 +1760,7 @@ function baixarBackupCompleto(){
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  const hoje = new Date().toISOString().slice(0,10);
+  const hoje = dataLocalISO(new Date());
   a.download = `backup-zelvora_${hoje}.json`;
   document.body.appendChild(a);
   a.click();
@@ -2249,8 +2260,8 @@ function vagasDoClienteAtivo(){
 /* ---------------- DASHBOARD ---------------- */
 function calcularIndicadoresDashboard(){
   const now = new Date();
-  const inicioMes = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0,10);
-  const hojeStr = now.toISOString().slice(0,10);
+  const inicioMes = dataLocalISO(new Date(now.getFullYear(), now.getMonth(), 1));
+  const hojeStr = dataLocalISO(now);
 
   const trabsCliente = trabalhadoresDoClienteAtivo();
   const empresasCliente = empresasDoClienteAtivo();
@@ -2306,6 +2317,8 @@ function renderDashboard(main){
   </div>`;
 
   const k = calcularIndicadoresDashboard();
+
+  html += renderPainelAvisos();
 
   html += `<div class="cards" style="margin-bottom:22px;">
     <div class="card"><h3 style="padding-right:0;font-size:28px;">${k.trabalhadoresAtivos}</h3><div class="addr">Trabalhadores ativos</div></div>
@@ -2710,13 +2723,28 @@ function saveBulkEmpresas(){
   render();
 }
 
+const DIAS_SEMANA = [
+  { v:1, label:'Seg' }, { v:2, label:'Ter' }, { v:3, label:'Qua' }, { v:4, label:'Qui' },
+  { v:5, label:'Sex' }, { v:6, label:'Sáb' }, { v:0, label:'Dom' },
+];
+
 function openEmpresaForm(id){
   const item = id ? state.empresas.find(e=>e.id===id) : null;
+  const diasAtuais = item && item.diasTrabalho ? item.diasTrabalho : [1,2,3,4,5]; // padrão: seg-sex
+  const diasHtml = DIAS_SEMANA.map(d => `
+    <label style="display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11.5px;color:var(--ink-soft);cursor:pointer;">
+      <input type="checkbox" class="chk-dia-trabalho" value="${d.v}" ${diasAtuais.includes(d.v)?'checked':''}>
+      ${d.label}
+    </label>`).join('');
   document.getElementById('modalBody').innerHTML = `
     <h3>${item ? 'Editar empresa' : 'Nova empresa'}</h3>
     <div class="field"><label>Nome da empresa</label><input id="f_nome" value="${item?item.nome:''}" placeholder="Ex: Distribuidora Ebro Ltda."></div>
     <div class="field"><label>CIF / NIF</label><input id="f_nif" value="${item?item.nif||'':''}" placeholder="B12345678"></div>
     <div class="field"><label>Contato (telefone ou email)</label><input id="f_contato" value="${item?item.contato||'':''}" placeholder="000000000"></div>
+    <div class="field"><label>Dias de trabalho normais dessa empresa</label>
+      <div style="display:flex;gap:10px;padding:8px 0;">${diasHtml}</div>
+      <div style="font-size:11.5px;color:var(--ink-soft);">Usado pra avisar quando um trabalhador dessa empresa tiver semana incompleta ou horas muito diferentes dos colegas.</div>
+    </div>
     <div class="modal-actions">
       <button class="btn ghost" onclick="closeModal()">Cancelar</button>
       <button class="btn" onclick="saveEmpresa('${id||''}')">Salvar</button>
@@ -2728,12 +2756,14 @@ function saveEmpresa(id){
   const nome = document.getElementById('f_nome').value.trim();
   if (!nome){ alert('Dê um nome à empresa.'); return; }
   const existing = id ? state.empresas.find(e=>e.id===id) : null;
+  const diasTrabalho = Array.from(document.querySelectorAll('.chk-dia-trabalho:checked')).map(c => Number(c.value));
   const data = {
     id: id || uid(),
     nome,
     nif: document.getElementById('f_nif').value.trim(),
     contato: document.getElementById('f_contato').value.trim(),
     clienteId: existing ? existing.clienteId : clienteAtivoId,
+    diasTrabalho,
   };
   const idx = state.empresas.findIndex(e=>e.id===id);
   if (idx >= 0) state.empresas[idx] = data; else state.empresas.push(data);
@@ -3130,8 +3160,8 @@ let reportEnd = null;
 function defaultReportPeriod(){
   const now = new Date();
   const first = new Date(now.getFullYear(), now.getMonth(), 1);
-  if (!reportStart) reportStart = first.toISOString().slice(0,10);
-  if (!reportEnd) reportEnd = now.toISOString().slice(0,10);
+  if (!reportStart) reportStart = dataLocalISO(first);
+  if (!reportEnd) reportEnd = dataLocalISO(now);
 }
 
 let reportShowHoras = true;
@@ -3165,8 +3195,8 @@ function horasEValorCartao(t){
     return { horas: sumHoras(t), total: totalPagar(t) };
   }
   const now = new Date();
-  const inicioMes = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0,10);
-  const hojeStr = now.toISOString().slice(0,10);
+  const inicioMes = dataLocalISO(new Date(now.getFullYear(), now.getMonth(), 1));
+  const hojeStr = dataLocalISO(now);
   const entriesMes = horasNoPeriodo(t, inicioMes, hojeStr);
   const horas = entriesMes.reduce((a,h)=>a+Number(h.quantidade||0),0);
   const total = entriesMes.reduce((a,h)=>a + Number(h.quantidade||0) * valorHoraEntrada(h, t), 0);
@@ -3188,6 +3218,96 @@ function mudarModoCartoes(modo){
   render();
 }
 
+function inicioSemanaISO(date){
+  const d = new Date(date);
+  const diaSemana = d.getDay(); // 0 = domingo
+  const diff = (diaSemana === 0) ? -6 : (1 - diaSemana); // volta pra segunda-feira
+  d.setDate(d.getDate() + diff);
+  return dataLocalISO(d);
+}
+
+// Verifica, pra semana atual, se falta gente registrar hora em dia esperado, se as horas
+// de alguém estão muito diferentes dos colegas da mesma empresa, e se falta documento.
+function calcularAvisos(){
+  const avisos = [];
+  const hoje = new Date();
+  const hojeStr = dataLocalISO(hoje);
+  const inicioSemana = inicioSemanaISO(hoje);
+  const trabs = trabalhadoresDoClienteAtivo();
+
+  const porEmpresa = {};
+  trabs.forEach(t => {
+    const eid = t.empresaId || '__sem__';
+    if (!porEmpresa[eid]) porEmpresa[eid] = [];
+    porEmpresa[eid].push(t);
+  });
+
+  Object.keys(porEmpresa).forEach(eid => {
+    const empresa = state.empresas.find(e => e.id === eid);
+    const nomeEmpresa = empresa ? empresa.nome : 'Sem empresa';
+    const diasEsperados = (empresa && empresa.diasTrabalho && empresa.diasTrabalho.length) ? empresa.diasTrabalho : null;
+    const colegas = porEmpresa[eid];
+
+    const horasSemana = colegas.map(t => {
+      const entries = horasNoPeriodo(t, inicioSemana, hojeStr);
+      const horas = entries.reduce((a,h)=>a+Number(h.quantidade||0),0);
+      return { trab: t, horas, entries };
+    });
+
+    const comHoras = horasSemana.filter(h => h.horas > 0);
+    const mediaGrupo = comHoras.length > 0 ? comHoras.reduce((a,h)=>a+h.horas,0) / comHoras.length : 0;
+
+    horasSemana.forEach(({trab, horas, entries}) => {
+      if (diasEsperados){
+        const diasComRegistro = new Set(entries.map(e => new Date(e.data+'T00:00:00').getDay()));
+        const diasFaltando = [];
+        for (let d = new Date(inicioSemana+'T00:00:00'); dataLocalISO(d) <= hojeStr; d.setDate(d.getDate()+1)){
+          const diaSemana = d.getDay();
+          if (diasEsperados.includes(diaSemana) && !diasComRegistro.has(diaSemana)){
+            diasFaltando.push(formatDate(dataLocalISO(d)));
+          }
+        }
+        if (diasFaltando.length > 0){
+          avisos.push({ tipo:'dia', trab, empresa: nomeEmpresa, texto: `${trab.nome} (${nomeEmpresa}): falta registrar ${diasFaltando.length} dia(s) essa semana — ${diasFaltando.join(', ')}` });
+        }
+      }
+
+      if (comHoras.length >= 2 && horas > 0 && mediaGrupo > 0){
+        const desvio = (horas - mediaGrupo) / mediaGrupo;
+        if (desvio <= -0.3){
+          avisos.push({ tipo:'abaixo', trab, empresa: nomeEmpresa, texto: `${trab.nome} (${nomeEmpresa}): ${horas.toLocaleString('pt-PT')}h essa semana — bem abaixo da média dos colegas (${mediaGrupo.toFixed(1)}h)` });
+        } else if (desvio >= 0.3){
+          avisos.push({ tipo:'acima', trab, empresa: nomeEmpresa, texto: `${trab.nome} (${nomeEmpresa}): ${horas.toLocaleString('pt-PT')}h essa semana — bem acima da média dos colegas (${mediaGrupo.toFixed(1)}h)` });
+        }
+      }
+    });
+  });
+
+  trabs.forEach(t => {
+    if (!t.documentos) t.documentos = {};
+    const faltando = DOCUMENTOS_TRABALHADOR.filter(d => !t.documentos[d.key]);
+    if (faltando.length > 0){
+      avisos.push({ tipo:'documento', trab: t, empresa: empresaNome(t.empresaId)||'', texto: `${t.nome}: falta ${faltando.map(d=>d.label).join(', ')}` });
+    }
+  });
+
+  return avisos;
+}
+
+function renderPainelAvisos(){
+  const avisos = calcularAvisos();
+  if (avisos.length === 0) return '';
+  const icone = { dia:'📅', abaixo:'📉', acima:'📈', documento:'📄' };
+  const itens = avisos.map(a => `<div style="display:flex;gap:8px;padding:7px 0;border-top:1px dashed rgba(0,0,0,0.08);font-size:13px;">
+    <span>${icone[a.tipo]||'⚠️'}</span><span>${a.texto}</span>
+  </div>`).join('');
+  return `<div class="rh-card" style="margin-bottom:20px;background:#FFF9E8;border-color:#E8CE7A;">
+    <div class="rh-name" style="margin-bottom:4px;">⚠️ Avisos (${avisos.length})</div>
+    <div style="font-size:12px;color:var(--ink-soft);margin-bottom:6px;">Semana atual · comparando com colegas da mesma empresa e documentos pendentes</div>
+    ${itens}
+  </div>`;
+}
+
 function renderHoras(main){
   defaultReportPeriod();
   const clienteAtivo = state.clientes.find(c=>c.id===clienteAtivoId);
@@ -3201,6 +3321,8 @@ function renderHoras(main){
       <button class="btn ${cartoesModoVisualizacao==='tudo'?'':'ghost'}" style="padding:7px 14px;font-size:12.5px;" onclick="mudarModoCartoes('tudo')">📊 Tudo (histórico)</button>
     </div>
   </div>`;
+
+  html += renderPainelAvisos();
 
   const empresaOpcoes = ['<option value="todas">Todas as empresas (separadas por página)</option>']
     .concat(empresasCliente.map(e => `<option value="${e.id}" ${reportEmpresaFiltro===e.id?'selected':''}>${e.nome}</option>`))
@@ -3790,8 +3912,8 @@ let reportTrabalhosEnd = null;
 function defaultReportTrabalhosPeriod(){
   const now = new Date();
   const first = new Date(now.getFullYear(), now.getMonth(), 1);
-  if (!reportTrabalhosStart) reportTrabalhosStart = first.toISOString().slice(0,10);
-  if (!reportTrabalhosEnd) reportTrabalhosEnd = now.toISOString().slice(0,10);
+  if (!reportTrabalhosStart) reportTrabalhosStart = dataLocalISO(first);
+  if (!reportTrabalhosEnd) reportTrabalhosEnd = dataLocalISO(now);
 }
 
 function renderTrabalhos(main){
@@ -3846,7 +3968,7 @@ const TIPOS_TRABALHO_RH = [
 
 function openTrabalhoForm(id){
   const item = id ? state.trabalhos.find(t=>t.id===id) : null;
-  const hoje = new Date().toISOString().slice(0,10);
+  const hoje = dataLocalISO(new Date());
   const tipoOptions = TIPOS_TRABALHO_RH.map(t=>`<option value="${t}" ${item&&item.tipo===t?'selected':''}>${t}</option>`).join('');
   const trabOptions = ['<option value="">— Nenhum —</option>'].concat(
     state.trabalhadores.map(t=>`<option value="${t.id}" ${item&&item.trabalhadorId===t.id?'selected':''}>${t.nome}</option>`)
@@ -4157,7 +4279,7 @@ function renderRelatorioGeral(main){
     html += `</tbody></table>`;
   }
 
-  html += `<div style="margin-top:18px;font-size:12.5px;color:var(--ink-soft);">Gerado em ${formatDate(new Date().toISOString().slice(0,10))}</div>`;
+  html += `<div style="margin-top:18px;font-size:12.5px;color:var(--ink-soft);">Gerado em ${formatDate(dataLocalISO(new Date()))}</div>`;
 
   main.innerHTML = html;
 }
