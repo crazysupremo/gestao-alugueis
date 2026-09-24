@@ -3368,17 +3368,28 @@ function renderHoras(main){
     return;
   }
 
+  const avisosPorTrabalhador = {};
+  calcularAvisos().forEach(a => {
+    if (!avisosPorTrabalhador[a.trab.id]) avisosPorTrabalhador[a.trab.id] = [];
+    avisosPorTrabalhador[a.trab.id].push(a);
+  });
+
   trabsCliente.forEach(t => {
     const { horas, total } = horasEValorCartao(t);
     const entries = (t.horas||[]).slice().sort((a,b)=> (a.data < b.data ? 1 : -1));
-    html += `<div class="rh-card">
+    const meusAvisos = avisosPorTrabalhador[t.id] || [];
+    const iconeAviso = { dia:'📅', abaixo:'📉', acima:'📈', documento:'📄' };
+    html += `<div class="rh-card" ${meusAvisos.length ? 'style="border-color:#E8CE7A;"' : ''}>
       <div class="rh-top">
         <div>
-          <div class="rh-name">${t.nome}</div>
+          <div class="rh-name">${t.nome} ${meusAvisos.length ? `<span class="pill" title="${meusAvisos.length} aviso(s)" style="background:#FFF3C4;border-color:#E8CE7A;color:#8A6A0E;font-weight:700;">⚠️ ${meusAvisos.length}</span>` : ''}</div>
           <div class="rh-meta">${t.cargo || 'Sem cargo definido'} · ${imovelNome(t.imovelId)} ${empresaNome(t.empresaId) ? '· '+empresaNome(t.empresaId) : ''}</div>
         </div>
         <button class="btn" onclick="openHoraForm('${t.id}')">+ Registrar horas</button>
       </div>
+      ${meusAvisos.length ? `<div style="background:#FFF9E8;border:1px solid #E8CE7A;border-radius:10px;padding:8px 12px;margin-top:10px;">
+        ${meusAvisos.map(a => `<div style="font-size:12.5px;color:#6B5410;padding:3px 0;">${iconeAviso[a.tipo]||'⚠️'} ${a.texto}</div>`).join('')}
+      </div>` : ''}
 
       <div class="rh-stats">        <div class="stat"><div class="num">${horas.toLocaleString('pt-PT')}h${badge200Horas(horas)}</div><div class="lab">${cartoesModoVisualizacao==='mes' ? 'Horas do mês atual' : 'Total de horas (tudo)'}</div></div>
         <div class="stat"><div class="num">€${total.toLocaleString('pt-PT',{minimumFractionDigits:2, maximumFractionDigits:2})}</div><div class="lab">${cartoesModoVisualizacao==='mes' ? 'Valor do mês atual' : 'Total a pagar (tudo)'}</div></div>
