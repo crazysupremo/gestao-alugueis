@@ -1585,9 +1585,18 @@ async function submitPin(){
 
 function openUsuariosForm(){
   const linhas = usuarios.map(u => `<div class="entry-row" id="usuario-row-${u.id}">
-    <span class="e-info">${u.nome} <span style="font-family:'JetBrains Mono';color:var(--ink-soft);">(PIN: ${'•'.repeat(u.pin.length)})</span></span>
+    <span class="e-info">${u.nome} <span style="font-family:'JetBrains Mono';color:var(--ink-soft);">(PIN: ${'•'.repeat(u.pin.length)})</span>
+      <span class="pill" style="font-size:10px;margin-left:6px;">${u.empresaId ? '🔒 só ' + (empresaNome(u.empresaId) || '(empresa removida)') : '🔓 acesso total'}</span>
+    </span>
     <span>${usuarios.length > 1 ? `<button class="icon-btn del" onclick="removerUsuario('${u.id}')">🗑️</button>` : ''}</span>
   </div>`).join('') || '<div class="no-entries">Nenhum usuário ainda.</div>';
+
+  // lista TODAS as empresas do cliente ativo, sem aplicar a restrição do usuário logado
+  // (quem está gerenciando usuários precisa ver todas as opções pra poder escolher)
+  const todasEmpresas = state.empresas.filter(e => e.clienteId === clienteAtivoId);
+  const empresaOptions = ['<option value="">— Acesso total (todas as empresas) —</option>']
+    .concat(todasEmpresas.map(e => `<option value="${e.id}">${e.nome}</option>`))
+    .join('');
 
   document.getElementById('modalBody').innerHTML = `
     <h3>Usuários com acesso</h3>
@@ -1595,6 +1604,9 @@ function openUsuariosForm(){
     <div class="section-title">Adicionar novo usuário</div>
     <div class="field"><label>Nome</label><input id="f_novo_usuario_nome" placeholder="Ex: Edson"></div>
     <div class="field"><label>PIN (4 a 12 dígitos)</label><input id="f_novo_usuario_pin" type="password" maxlength="12" inputmode="numeric" placeholder="••••"></div>
+    <div class="field"><label>Empresa que essa pessoa pode ver</label><select id="f_novo_usuario_empresa">${empresaOptions}</select>
+      <div style="font-size:11.5px;color:var(--ink-soft);margin-top:4px;">Escolhendo uma empresa, essa pessoa só vê trabalhadores, horas e relatórios dessa empresa. Deixe "Acesso total" pra administradores.</div>
+    </div>
     <div class="modal-actions">
       <button class="btn ghost" onclick="closeModal()">Fechar</button>
       <button class="btn" onclick="adicionarUsuario()">+ Adicionar usuário</button>
@@ -1605,10 +1617,11 @@ function openUsuariosForm(){
 async function adicionarUsuario(){
   const nome = (document.getElementById('f_novo_usuario_nome').value || '').trim();
   const pin = (document.getElementById('f_novo_usuario_pin').value || '').trim();
+  const empresaId = document.getElementById('f_novo_usuario_empresa').value || null;
   if (!nome){ alert('Digite um nome.'); return; }
   if (pin.length < 4){ alert('O PIN deve ter pelo menos 4 dígitos.'); return; }
   if (usuarios.some(u => u.pin === pin)){ alert('Já existe alguém com esse PIN. Escolha outro.'); return; }
-  usuarios.push({ id: uid(), nome, pin });
+  usuarios.push({ id: uid(), nome, pin, empresaId });
   await fsSet('usuarios', JSON.stringify(usuarios));
   showToast(`✓ Acesso criado para ${nome}`, false, 2000);
   openUsuariosForm();
@@ -2085,7 +2098,12 @@ function removerCliente(id, event){
 }
 
 function empresasDoClienteAtivo(){
-  return state.empresas.filter(e => e.clienteId === clienteAtivoId);
+  let lista = state.empresas.filter(e => e.clienteId === clienteAtivoId);
+  // Usuário restrito a uma empresa só (ex: alguém da INOXPASER) só vê a empresa dele.
+  if (usuarioAtual && usuarioAtual.empresaId){
+    lista = lista.filter(e => e.id === usuarioAtual.empresaId);
+  }
+  return lista;
 }
 
 function trabalhadoresDoClienteAtivo(){
