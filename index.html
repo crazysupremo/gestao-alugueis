@@ -645,9 +645,9 @@ function uid(){ return Math.random().toString(36).slice(2,9); }
    Assistente de IA (Gemini) — chat de dúvidas + análise de candidatura
    (usado apenas no modo candidato, ?entrevista=1)
    ========================================================= */
-const GEMINI_API_KEY = "AQ.Ab8RN6KrPIcokD2Ws1HaAvXn5WlNN8xVqz2Bx6N22NaNfWNKtQ";
+const GEMINI_API_KEY = "AQ.Ab8RN6JrR6tQKF5PLJFBmAq8PsmHUPQZJ01EYjhKFLW420yE6w";
 const GROQ_API_KEY = "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";
-const GROQ_MODEL = "llama-3.3-70b-versatile";
+const GROQ_MODEL = "openai/gpt-oss-120b"; // llama-3.3-70b-versatile foi desativado pela Groq (16/08/2026)
 const GEMINI_MODELS = ["gemini-flash-latest", "gemini-3.6-flash"];
 
 async function tentarChamadaGemini(model, authMode, body){
@@ -1584,20 +1584,63 @@ async function submitPin(){
   }
 }
 
+// Nível de acesso de cada usuário:
+//  - super: vê e mexe em tudo, todos os clientes (ex: você, o dono da gestora)
+//  - cliente: vê tudo de UM cliente (ex: Edson, dono da DF Neto — vê Herditt, Drogo, STS, etc,
+//             mas não vê outros clientes nem pode criar um cliente novo)
+//  - empresa: vê só UMA empresa dentro de um cliente (ex: alguém da Herditt)
+function nivelDoUsuario(u){
+  if (!u) return 'super';
+  if (u.empresaId) return 'empresa';
+  if (u.clienteId) return 'cliente';
+  return 'super';
+}
+
+function descricaoAcessoUsuario(u){
+  const nivel = nivelDoUsuario(u);
+  if (nivel === 'empresa') return '🔒 só ' + (empresaNome(u.empresaId) || '(empresa removida)');
+  if (nivel === 'cliente') return '🏢 tudo de ' + ((state.clientes.find(c=>c.id===u.clienteId)||{}).nome || '(cliente removido)');
+  return '🔓 acesso total (todos os clientes)';
+}
+
 function openUsuariosForm(){
+  const meuNivel = nivelDoUsuario(usuarioAtual);
   const linhas = usuarios.map(u => `<div class="entry-row" id="usuario-row-${u.id}">
     <span class="e-info">${u.nome} <span style="font-family:'JetBrains Mono';color:var(--ink-soft);">(PIN: ${'•'.repeat(u.pin.length)})</span>
-      <span class="pill" style="font-size:10px;margin-left:6px;">${u.empresaId ? '🔒 só ' + (empresaNome(u.empresaId) || '(empresa removida)') : '🔓 acesso total'}</span>
+      <span class="pill" style="font-size:10px;margin-left:6px;">${descricaoAcessoUsuario(u)}</span>
     </span>
     <span>${usuarios.length > 1 ? `<button class="icon-btn del" onclick="removerUsuario('${u.id}')">🗑️</button>` : ''}</span>
   </div>`).join('') || '<div class="no-entries">Nenhum usuário ainda.</div>';
 
-  // lista TODAS as empresas do cliente ativo, sem aplicar a restrição do usuário logado
-  // (quem está gerenciando usuários precisa ver todas as opções pra poder escolher)
-  const todasEmpresas = state.empresas.filter(e => e.clienteId === clienteAtivoId);
-  const empresaOptions = ['<option value="">— Acesso total (todas as empresas) —</option>']
-    .concat(todasEmpresas.map(e => `<option value="${e.id}">${e.nome}</option>`))
-    .join('');
+  // Quem é admin de UM cliente só (nível "cliente") só pode criar usuários de empresa
+  // dentro do próprio cliente dele — não pode criar outro admin de cliente nem acesso total,
+  // nem mexer em outro cliente. Quem é "super" pode criar qualquer nível, pra qualquer cliente.
+  const clienteParaCriar = meuNivel === 'cliente' ? usuarioAtual.clienteId : clienteAtivoId;
+  const todasEmpresas = state.empresas.filter(e => e.clienteId === clienteParaCriar);
+  const empresaOptions = todasEmpresas.map(e => `<option value="${e.id}">${e.nome}</option>`).join('');
+
+  let nivelOptions = '';
+  if (meuNivel === 'super'){
+    const clienteOptions = state.clientes.map(c => `<option value="${c.id}">${c.nome}</option>`).join('');
+    nivelOptions = `
+      <div class="field"><label>Nível de acesso</label>
+        <select id="f_novo_usuario_nivel" onchange="atualizarCamposNivelUsuario()">
+          <option value="super">Acesso total (todos os clientes) — administrador geral</option>
+          <option value="cliente" selected>Um cliente inteiro (ex: DF Neto) — vê todas as empresas dele</option>
+          <option value="empresa">Uma empresa só (ex: Herditt)</option>
+        </select>
+      </div>
+      <div class="field" id="wrapNovoUsuarioCliente"><label>Cliente</label><select id="f_novo_usuario_cliente" onchange="atualizarEmpresasNovoUsuario()">${clienteOptions}</select></div>
+      <div class="field" id="wrapNovoUsuarioEmpresa" style="display:none;"><label>Empresa</label><select id="f_novo_usuario_empresa"></select></div>`;
+  } else {
+    // admin de cliente: só pode criar usuário de empresa, dentro do cliente dele
+    nivelOptions = `
+      <input type="hidden" id="f_novo_usuario_nivel" value="empresa">
+      <input type="hidden" id="f_novo_usuario_cliente" value="${usuarioAtual.clienteId}">
+      <div class="field"><label>Empresa (dentro de ${(state.clientes.find(c=>c.id===usuarioAtual.clienteId)||{}).nome || ''})</label>
+        <select id="f_novo_usuario_empresa">${empresaOptions || '<option value="">Nenhuma empresa cadastrada ainda</option>'}</select>
+      </div>`;
+  }
 
   document.getElementById('modalBody').innerHTML = `
     <h3>Usuários com acesso</h3>
@@ -1605,24 +1648,51 @@ function openUsuariosForm(){
     <div class="section-title">Adicionar novo usuário</div>
     <div class="field"><label>Nome</label><input id="f_novo_usuario_nome" placeholder="Ex: Edson"></div>
     <div class="field"><label>PIN (4 a 12 dígitos)</label><input id="f_novo_usuario_pin" type="password" maxlength="12" inputmode="numeric" placeholder="••••"></div>
-    <div class="field"><label>Empresa que essa pessoa pode ver</label><select id="f_novo_usuario_empresa">${empresaOptions}</select>
-      <div style="font-size:11.5px;color:var(--ink-soft);margin-top:4px;">Escolhendo uma empresa, essa pessoa só vê trabalhadores, horas e relatórios dessa empresa. Deixe "Acesso total" pra administradores.</div>
-    </div>
+    ${nivelOptions}
     <div class="modal-actions">
       <button class="btn ghost" onclick="closeModal()">Fechar</button>
       <button class="btn" onclick="adicionarUsuario()">+ Adicionar usuário</button>
     </div>`;
   showModal();
+  if (meuNivel === 'super') atualizarEmpresasNovoUsuario();
+}
+
+function atualizarCamposNivelUsuario(){
+  const nivel = document.getElementById('f_novo_usuario_nivel').value;
+  document.getElementById('wrapNovoUsuarioCliente').style.display = (nivel === 'cliente' || nivel === 'empresa') ? 'block' : 'none';
+  document.getElementById('wrapNovoUsuarioEmpresa').style.display = (nivel === 'empresa') ? 'block' : 'none';
+  if (nivel === 'empresa') atualizarEmpresasNovoUsuario();
+}
+
+function atualizarEmpresasNovoUsuario(){
+  const clienteId = document.getElementById('f_novo_usuario_cliente').value;
+  const empresasDoCliente = state.empresas.filter(e => e.clienteId === clienteId);
+  const sel = document.getElementById('f_novo_usuario_empresa');
+  if (sel) sel.innerHTML = empresasDoCliente.map(e => `<option value="${e.id}">${e.nome}</option>`).join('') || '<option value="">Nenhuma empresa cadastrada ainda</option>';
 }
 
 async function adicionarUsuario(){
   const nome = (document.getElementById('f_novo_usuario_nome').value || '').trim();
   const pin = (document.getElementById('f_novo_usuario_pin').value || '').trim();
-  const empresaId = document.getElementById('f_novo_usuario_empresa').value || null;
+  const nivel = document.getElementById('f_novo_usuario_nivel').value;
   if (!nome){ alert('Digite um nome.'); return; }
   if (pin.length < 4){ alert('O PIN deve ter pelo menos 4 dígitos.'); return; }
   if (usuarios.some(u => u.pin === pin)){ alert('Já existe alguém com esse PIN. Escolha outro.'); return; }
-  usuarios.push({ id: uid(), nome, pin, empresaId });
+
+  const novo = { id: uid(), nome, pin, clienteId: null, empresaId: null };
+  if (nivel === 'cliente'){
+    novo.clienteId = document.getElementById('f_novo_usuario_cliente').value || null;
+  } else if (nivel === 'empresa'){
+    novo.clienteId = document.getElementById('f_novo_usuario_cliente').value || null;
+    novo.empresaId = document.getElementById('f_novo_usuario_empresa').value || null;
+    if (!novo.empresaId){ alert('Escolha uma empresa.'); return; }
+  }
+  // segurança extra: admin de cliente nunca cria nada fora do próprio cliente
+  if (nivelDoUsuario(usuarioAtual) === 'cliente'){
+    novo.clienteId = usuarioAtual.clienteId;
+  }
+
+  usuarios.push(novo);
   await fsSet('usuarios', JSON.stringify(usuarios));
   tursoBackupSet('usuarios', JSON.stringify(usuarios));
   showToast(`✓ Acesso criado para ${nome}`, false, 2000);
@@ -1876,6 +1946,7 @@ async function loadAll(){
     if (precisaSalvarVagas) await persist('vagas');
   }
   clienteAtivoId = state.clientes[0].id;
+  travarClienteParaUsuario();
 
   if (loadError){
     showToast('⚠️ Não foi possível carregar alguns dados do banco. Verifique sua conexão.', true, 0);
@@ -2015,19 +2086,39 @@ function render(){
 function renderClienteTabs(){
   const el = document.getElementById('clienteTabs');
   if (!el) return;
-  let html = state.clientes.map(c => `
+  const meuNivel = nivelDoUsuario(usuarioAtual);
+  const restrito = meuNivel !== 'super';
+  const clientesVisiveis = restrito ? state.clientes.filter(c => c.id === clienteAtivoId) : state.clientes;
+
+  let html = clientesVisiveis.map(c => `
     <span class="cliente-tab-wrap">
       <button class="cliente-tab ${c.id===clienteAtivoId?'active':''}" onclick="selecionarCliente('${c.id}')">${c.nome}</button>
-      <button class="cliente-tab-del" title="Remover cliente" onclick="removerCliente('${c.id}', event)">✕</button>
+      ${restrito ? '' : `<button class="cliente-tab-del" title="Remover cliente" onclick="removerCliente('${c.id}', event)">✕</button>`}
     </span>`).join('');
-  html += `<button class="cliente-tab add-btn" onclick="adicionarCliente()">+ Cliente</button>`;
+  if (!restrito){
+    html += `<button class="cliente-tab add-btn" onclick="adicionarCliente()">+ Cliente</button>`;
+  }
   el.innerHTML = html;
 }
 
 function selecionarCliente(id){
+  // usuário restrito (nível cliente ou empresa) não pode trocar pra outro cliente
+  if (nivelDoUsuario(usuarioAtual) !== 'super' && id !== usuarioAtual.clienteId) return;
   clienteAtivoId = id;
   view = 'dashboard';
   render();
+}
+
+// Trava o cliente ativo de acordo com o nível do usuário logado — chamado logo após o login.
+function travarClienteParaUsuario(){
+  if (!usuarioAtual) return;
+  const nivel = nivelDoUsuario(usuarioAtual);
+  if (nivel === 'cliente' && usuarioAtual.clienteId){
+    clienteAtivoId = usuarioAtual.clienteId;
+  } else if (nivel === 'empresa' && usuarioAtual.empresaId){
+    const emp = state.empresas.find(e => e.id === usuarioAtual.empresaId);
+    if (emp) clienteAtivoId = emp.clienteId;
+  }
 }
 
 /* ---------------- BUSCA GLOBAL ---------------- */
