@@ -1563,6 +1563,7 @@ async function submitPin(){
     try{
       usuarios = [novoUsuario];
       await fsSet('usuarios', JSON.stringify(usuarios));
+      tursoBackupSet('usuarios', JSON.stringify(usuarios));
       usuarioAtual = novoUsuario;
       enterApp();
     }catch(e){
@@ -1623,6 +1624,7 @@ async function adicionarUsuario(){
   if (usuarios.some(u => u.pin === pin)){ alert('Já existe alguém com esse PIN. Escolha outro.'); return; }
   usuarios.push({ id: uid(), nome, pin, empresaId });
   await fsSet('usuarios', JSON.stringify(usuarios));
+  tursoBackupSet('usuarios', JSON.stringify(usuarios));
   showToast(`✓ Acesso criado para ${nome}`, false, 2000);
   openUsuariosForm();
 }
@@ -1632,6 +1634,7 @@ async function removerUsuario(id){
   if (!confirm('Remover o acesso dessa pessoa?')) return;
   usuarios = usuarios.filter(u => u.id !== id);
   await fsSet('usuarios', JSON.stringify(usuarios));
+  tursoBackupSet('usuarios', JSON.stringify(usuarios));
   openUsuariosForm();
 }
 
@@ -1880,12 +1883,49 @@ async function loadAll(){
   render();
 }
 
+/* ---------------- Turso — cópia de segurança extra (não é o banco principal) ---------------- */
+// Firestore continua sendo o banco de verdade. Toda vez que salvamos algo lá, mandamos
+// uma cópia silenciosa pro Turso também — se isso falhar (sem internet, token expirado,
+// etc), o app não trava nem mostra erro pro usuário: é só uma segunda cópia de segurança.
+const TURSO_DB_URL = "https://gestao-de-alugueis-crazysupremo.aws-us-west-2.turso.io";
+const TURSO_AUTH_TOKEN = "eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJhIjoicnciLCJpYXQiOjE3OTAyNDIyMzUsImlkIjoiMDFhMGQyYjktNTAwMS03OThiLThjMTYtZTk0NmIxYzM3ZWI1Iiwia2lkIjoiZTRTV1BObE1rUGhnWTltR3g5cU02R0Rfakh6WU9ib2VZQVMyTF9TTVctRSIsInJpZCI6Ijk4ZGYzZGM0LWVjNTEtNDRjNS05YzdlLTVjYzVlNWU2YThhZSJ9.4Iv9y9IJ2fAbZZpyV_hJJQPiAZ4QsBhupgywr5CB_jsM-jqDC4mCnaGSZMXSoPZh8xnt115qWPEXq_9n11ZgCA";
+
+async function tursoBackupSet(key, value){
+  try{
+    const body = {
+      requests: [
+        {
+          type: 'execute',
+          stmt: {
+            sql: "INSERT INTO app_data (key, value, atualizado_em) VALUES (?, ?, ?) ON CONFLICT(key) DO UPDATE SET value=excluded.value, atualizado_em=excluded.atualizado_em",
+            args: [
+              { type: 'text', value: String(key) },
+              { type: 'text', value: String(value) },
+              { type: 'text', value: new Date().toISOString() },
+            ],
+          },
+        },
+        { type: 'close' },
+      ],
+    };
+    await fetch(`${TURSO_DB_URL}/v2/pipeline`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${TURSO_AUTH_TOKEN}` },
+      body: JSON.stringify(body),
+    });
+  }catch(e){
+    // Backup extra falhou — não é crítico, o Firestore (principal) já salvou. Só loga.
+    console.warn('Backup Turso falhou (não crítico):', e.message);
+  }
+}
+
 async function persist(key, attempt){
   attempt = attempt || 1;
   try{
     const result = await fsSet(key, JSON.stringify(state[key]));
     if (!result){ throw new Error('resultado vazio'); }
     showToast('✓ Salvo', false, 1400);
+    tursoBackupSet(key, JSON.stringify(state[key])); // cópia de segurança, sem esperar nem travar nada
     return true;
   }catch(e){
     console.error('storage error', e);
