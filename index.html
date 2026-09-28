@@ -95,7 +95,7 @@
 
   /* Main */
   .main{flex:1;padding:36px 44px;max-width:1180px;}
-  .topbar{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:28px;}
+  .topbar{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:28px;padding-bottom:20px;border-bottom:1px solid var(--line);}
   h1{font-family:'Fraunces',serif;font-size:30px;margin:0;font-weight:700;letter-spacing:-.01em;}
   .subtitle{color:var(--ink-soft);font-size:14px;margin-top:4px;}
   .btn{
@@ -121,6 +121,23 @@
     box-shadow:var(--shadow);position:relative;
   }
   .card:hover{box-shadow:var(--shadow-lg);transform:translateY(-2px);border-color:#C3CBD1;}
+
+  /* Cartões de indicador (dashboard) */
+  .stat-card{
+    background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px 22px;
+    box-shadow:var(--shadow);position:relative;overflow:hidden;
+  }
+  .stat-card:hover{box-shadow:var(--shadow-lg);transform:translateY(-2px);}
+  .stat-card::before{
+    content:'';position:absolute;top:0;left:0;right:0;height:3px;
+    background:linear-gradient(90deg, var(--teal), var(--teal-dark));
+  }
+  .stat-card .stat-icon{
+    width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;
+    font-size:18px;margin-bottom:14px;background:rgba(31,92,139,0.1);
+  }
+  .stat-card .stat-num{font-family:'Fraunces',serif;font-weight:700;font-size:30px;color:var(--ink);line-height:1;}
+  .stat-card .stat-label{color:var(--ink-soft);font-size:12.5px;margin-top:8px;font-weight:500;}
   .seal{
     position:absolute;top:14px;right:14px;width:34px;height:34px;border-radius:50%;
     display:flex;align-items:center;justify-content:center;font-family:'Fraunces',serif;font-weight:700;
@@ -131,7 +148,8 @@
   .kv{display:flex;justify-content:space-between;font-size:13px;padding:5px 0;border-top:1px dashed var(--line);}
   .kv span:first-child{color:var(--ink-soft);}
   .kv b{font-family:'JetBrains Mono';font-weight:600;}
-  .empty{color:var(--ink-soft);font-size:13px;text-align:center;padding:40px 0;border:1px dashed var(--line);border-radius:12px;}
+  .empty{color:var(--ink-soft);font-size:13px;text-align:center;padding:48px 20px;border:1.5px dashed var(--line);border-radius:14px;background:var(--paper-2);}
+  .empty::before{content:'📭';display:block;font-size:28px;margin-bottom:10px;opacity:.7;}
   .status{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;
     padding:2px 8px;border-radius:20px;margin-top:10px;}
   .status.ativo{background:#DEEDE9;color:var(--teal-dark);}
@@ -209,10 +227,10 @@
   .rh-top{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;}
   .rh-name{font-family:'Fraunces',serif;font-weight:700;font-size:18px;}
   .rh-meta{color:var(--ink-soft);font-size:12.5px;margin-top:2px;}
-  .rh-stats{display:flex;gap:22px;margin-top:14px;flex-wrap:wrap;}
-  .stat{min-width:110px;}
+  .rh-stats{display:flex;gap:14px;margin-top:14px;flex-wrap:wrap;}
+  .stat{min-width:120px;background:var(--paper-2);border-radius:10px;padding:10px 14px;}
   .stat .num{font-family:'JetBrains Mono';font-weight:700;font-size:20px;color:var(--teal-dark);}
-  .stat .lab{font-size:11px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.04em;}
+  .stat .lab{font-size:11px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.04em;margin-top:2px;}
   .rate-edit{display:flex;align-items:center;gap:6px;margin-top:10px;}
   .rate-edit input{width:90px;padding:6px 8px;border:1px solid var(--line);border-radius:6px;font-family:'JetBrains Mono';font-size:13px;background:var(--paper-2);}
   .entries{margin-top:14px;border-top:1px dashed var(--line);padding-top:10px;}
@@ -2333,11 +2351,12 @@ function renderDashboard(main){
 
   html += renderPainelAvisos();
 
+  const margemNeg = k.totalMargem < 0;
   html += `<div class="cards" style="margin-bottom:22px;">
-    <div class="card"><h3 style="padding-right:0;font-size:28px;">${k.trabalhadoresAtivos}</h3><div class="addr">Trabalhadores ativos</div></div>
-    <div class="card"><h3 style="padding-right:0;font-size:28px;">${k.empresasClientes}</h3><div class="addr">Empresas subcontratadas</div></div>
-    <div class="card"><h3 style="padding-right:0;font-size:28px;">${k.imoveisAtivos}</h3><div class="addr">Imóveis ativos</div></div>
-    <div class="card"><h3 style="padding-right:0;font-size:24px;color:var(--teal-dark);">€${k.totalMargem.toLocaleString('pt-PT',{minimumFractionDigits:2,maximumFractionDigits:2})}</h3><div class="addr">Margem estimada (mês atual)</div></div>
+    <div class="stat-card"><div class="stat-icon">👷</div><div class="stat-num">${k.trabalhadoresAtivos}</div><div class="stat-label">Trabalhadores ativos</div></div>
+    <div class="stat-card"><div class="stat-icon">🏢</div><div class="stat-num">${k.empresasClientes}</div><div class="stat-label">Empresas subcontratadas</div></div>
+    <div class="stat-card"><div class="stat-icon">🏠</div><div class="stat-num">${k.imoveisAtivos}</div><div class="stat-label">Imóveis ativos</div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:${margemNeg?'rgba(156,63,45,0.1)':'rgba(31,92,139,0.1)'};">${margemNeg?'📉':'💶'}</div><div class="stat-num" style="font-size:24px;color:${margemNeg?'var(--rust)':'var(--teal-dark)'};">€${k.totalMargem.toLocaleString('pt-PT',{minimumFractionDigits:2,maximumFractionDigits:2})}</div><div class="stat-label">Margem estimada (mês atual)</div></div>
   </div>`;
 
   html += `<div class="rh-card" style="margin-bottom:22px;">
@@ -2700,6 +2719,7 @@ function renderEmpresas(main){
         <td>${imoveisVinculados || '—'}</td>
         <td>${e.contato || '—'}</td>
         <td class="row-actions">
+          <button class="icon-btn" title="Link pra trabalhadores dessa empresa enviarem horas por foto" onclick="copiarLinkEnvioHoras('${e.id}')">🔗</button>
           <button class="icon-btn" onclick="openEmpresaForm('${e.id}')">✏️</button>
           <button class="icon-btn del" onclick="deleteItem('empresas','${e.id}')">🗑️</button>
         </td>
@@ -3232,9 +3252,10 @@ function mudarModoCartoes(modo){
   render();
 }
 
-function copiarLinkEnvioHoras(){
-  const url = `${window.location.origin}${window.location.pathname}?enviarHoras=1`;
-  const avisar = () => showToast('✓ Link copiado — já pode mandar pro trabalhador', false, 2500);
+function copiarLinkEnvioHoras(empresaId){
+  const empresa = empresaId ? state.empresas.find(e => e.id === empresaId) : null;
+  const url = `${window.location.origin}${window.location.pathname}?enviarHoras=1${empresaId ? '&empresaId='+encodeURIComponent(empresaId) : ''}`;
+  const avisar = () => showToast(`✓ Link de ${empresa ? empresa.nome : 'todas as empresas'} copiado`, false, 2500);
   const avisarErro = () => {
     prompt('Copie o link abaixo:', url);
   };
@@ -3342,13 +3363,10 @@ function renderHoras(main){
   const trabsCliente = trabalhadoresDoClienteAtivo();
 
   let html = `<div class="topbar">
-    <div><h1>Horas & RH</h1><div class="subtitle">Registro de horas — cliente ${clienteAtivo ? clienteAtivo.nome : '—'}</div></div>
-    <div style="display:flex;gap:8px;align-items:center;">
-      <button class="btn ghost" onclick="copiarLinkEnvioHoras()">🔗 Link pra trabalhador enviar horas</button>
-      <div style="display:flex;gap:6px;background:var(--paper-2);padding:4px;border-radius:10px;">
-        <button class="btn ${cartoesModoVisualizacao==='mes'?'':'ghost'}" style="padding:7px 14px;font-size:12.5px;" onclick="mudarModoCartoes('mes')">📅 Mês atual</button>
-        <button class="btn ${cartoesModoVisualizacao==='tudo'?'':'ghost'}" style="padding:7px 14px;font-size:12.5px;" onclick="mudarModoCartoes('tudo')">📊 Tudo (histórico)</button>
-      </div>
+    <div><h1>Horas & RH</h1><div class="subtitle">Registro de horas — cliente ${clienteAtivo ? clienteAtivo.nome : '—'} · o link pra trabalhador enviar horas por foto agora é por empresa — pegue em <a href="#" onclick="view='empresas';render();return false;" style="color:var(--teal);">Empresas 🔗</a></div></div>
+    <div style="display:flex;gap:6px;background:var(--paper-2);padding:4px;border-radius:10px;">
+      <button class="btn ${cartoesModoVisualizacao==='mes'?'':'ghost'}" style="padding:7px 14px;font-size:12.5px;" onclick="mudarModoCartoes('mes')">📅 Mês atual</button>
+      <button class="btn ${cartoesModoVisualizacao==='tudo'?'':'ghost'}" style="padding:7px 14px;font-size:12.5px;" onclick="mudarModoCartoes('tudo')">📊 Tudo (histórico)</button>
     </div>
   </div>`;
 
@@ -4547,15 +4565,16 @@ let candidateStepIndex = 0;
 let candidateContractHTML = '';
 let candidateVaga = null;
 
-/* ================= Envio de horas por foto (link público, ?enviarHoras=1) ================= */
-let envioHorasEstado = { fase: 'selecionar', trabalhadorId: '', imagem: null, resultado: null, erro: '' };
+/* ================= Envio de horas por foto (link público, ?enviarHoras=1&empresaId=...) ================= */
+let envioHorasEstado = { fase: 'selecionar', trabalhadorId: '', imagem: null, resultado: null, erro: '', empresaIdFiltro: null };
 
 async function startEnvioHorasFlow(){
   document.getElementById('envioHorasRoot').style.display = 'flex';
   try{ const r = await fsGet('trabalhadores'); state.trabalhadores = r ? JSON.parse(r.value) : []; }catch(e){ state.trabalhadores = []; }
   try{ const r2 = await fsGet('empresas'); state.empresas = r2 ? JSON.parse(r2.value) : []; }catch(e){ state.empresas = []; }
   try{ const r3 = await fsGet('clientes'); state.clientes = r3 ? JSON.parse(r3.value) : []; }catch(e){ state.clientes = []; }
-  envioHorasEstado = { fase: 'selecionar', trabalhadorId: '', imagem: null, resultado: null, erro: '' };
+  const empresaIdFiltro = urlParams.get('empresaId') || null;
+  envioHorasEstado = { fase: 'selecionar', trabalhadorId: '', imagem: null, resultado: null, erro: '', empresaIdFiltro };
   renderEnvioHoras();
 }
 
@@ -4566,16 +4585,37 @@ function empresaNomePublico(empresaId){
 
 function renderEnvioHoras(){
   const box = document.getElementById('envioHorasBox');
-  const trabsOrdenados = state.trabalhadores.slice().sort((a,b)=> a.nome.localeCompare(b.nome));
-  const opcoes = ['<option value="">— Selecione seu nome —</option>']
-    .concat(trabsOrdenados.map(t => `<option value="${t.id}" ${envioHorasEstado.trabalhadorId===t.id?'selected':''}>${t.nome}${empresaNomePublico(t.empresaId) ? ' — '+empresaNomePublico(t.empresaId) : ''}</option>`))
+  const empresaFiltro = envioHorasEstado.empresaIdFiltro ? state.empresas.find(e => e.id === envioHorasEstado.empresaIdFiltro) : null;
+  let trabsOrdenados = state.trabalhadores.slice();
+  if (envioHorasEstado.empresaIdFiltro){
+    trabsOrdenados = trabsOrdenados.filter(t => t.empresaId === envioHorasEstado.empresaIdFiltro);
+  }
+  trabsOrdenados.sort((a,b)=> a.nome.localeCompare(b.nome));
+
+  if (!envioHorasEstado.empresaIdFiltro){
+    box.innerHTML = `<div class="candidate-head">
+      <div class="badge">⚠️</div>
+      <h1>Link inválido</h1>
+      <p>Esse link precisa vir de uma empresa específica. Peça pro responsável te mandar o link certinho, pela tela de Empresas.</p>
+    </div>`;
+    return;
+  }
+
+  const opcoes = [`<option value="">— Selecione seu nome —</option>`]
+    .concat(trabsOrdenados.map(t => `<option value="${t.id}" ${envioHorasEstado.trabalhadorId===t.id?'selected':''}>${t.nome}</option>`))
     .join('');
 
   let html = `<div class="candidate-head">
     <div class="badge">📸</div>
     <h1>Enviar minhas horas</h1>
-    <p>Escolha seu nome, tire (ou anexe) uma foto legível da folha de horas, e o sistema já registra pra você.</p>
+    <p>${empresaFiltro ? `Trabalhadores de <b>${empresaFiltro.nome}</b>. ` : ''}Escolha seu nome, tire (ou anexe) uma foto legível da folha de horas, e o sistema já registra pra você.</p>
   </div>`;
+
+  if (trabsOrdenados.length === 0){
+    html += `<div class="empty">Nenhum trabalhador cadastrado ainda nessa empresa.</div>`;
+    box.innerHTML = html;
+    return;
+  }
 
   html += `<div class="field" style="margin-bottom:16px;">
     <label style="display:block;font-size:13px;font-weight:600;color:var(--ink-soft);margin-bottom:6px;">Seu nome</label>
@@ -4640,7 +4680,8 @@ function onEnvioHorasFileSelected(event){
 
 function reiniciarEnvioHoras(){
   const manterTrabalhador = envioHorasEstado.trabalhadorId;
-  envioHorasEstado = { fase: 'selecionar', trabalhadorId: manterTrabalhador, imagem: null, resultado: null, erro: '' };
+  const empresaIdFiltro = envioHorasEstado.empresaIdFiltro;
+  envioHorasEstado = { fase: 'selecionar', trabalhadorId: manterTrabalhador, imagem: null, resultado: null, erro: '', empresaIdFiltro };
   renderEnvioHoras();
 }
 
