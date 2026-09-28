@@ -29,25 +29,27 @@
     --vigo: #1F5C8B;
     --miranda: #8A8F97;
     --shadow: 0 1px 2px rgba(20,22,25,0.07), 0 4px 14px rgba(20,22,25,0.06);
+    --shadow-lg: 0 4px 10px rgba(18,56,83,0.08), 0 14px 32px rgba(18,56,83,0.10);
   }
   *{box-sizing:border-box;}
-  html,body{margin:0;padding:0;background:var(--paper);color:var(--ink);font-family:'Inter',sans-serif;}
+  html,body{margin:0;padding:0;background:var(--paper);color:var(--ink);font-family:'Inter',sans-serif;-webkit-font-smoothing:antialiased;}
   .app{display:flex;min-height:100vh;}
+  a, button, input, select, .card, .rh-card, table tr{transition:background-color .15s ease, border-color .15s ease, box-shadow .18s ease, transform .12s ease, color .15s ease;}
 
   /* Sidebar */
   .sidebar{
-    width:220px;flex-shrink:0;background:var(--teal-dark);color:#EDEAE1;
-    padding:28px 18px;display:flex;flex-direction:column;gap:6px;
+    width:220px;flex-shrink:0;background:linear-gradient(180deg, var(--teal-dark) 0%, #0E2A3E 100%);color:#EDEAE1;
+    padding:28px 18px;display:flex;flex-direction:column;gap:6px;box-shadow:2px 0 18px rgba(0,0,0,0.12);
   }
   .brand{font-family:'Fraunces',serif;font-weight:700;font-size:20px;line-height:1.15;margin-bottom:4px;color:#fff;display:flex;align-items:center;gap:10px;}
   .brand small{display:block;font-family:'Inter';font-weight:500;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#9FC2BC;margin-top:6px;}
   .nav{margin-top:28px;display:flex;flex-direction:column;gap:2px;}
   .nav button{
     all:unset;cursor:pointer;padding:10px 12px;border-radius:8px;font-size:14px;font-weight:500;
-    color:#D8E6E3;display:flex;align-items:center;gap:10px;
+    color:#D8E6E3;display:flex;align-items:center;gap:10px;transition:background-color .15s ease, transform .12s ease;
   }
-  .nav button:hover{background:rgba(255,255,255,0.08);}
-  .nav button.active{background:#EDEAE1;color:var(--teal-dark);font-weight:700;}
+  .nav button:hover{background:rgba(255,255,255,0.08);transform:translateX(2px);}
+  .nav button.active{background:#EDEAE1;color:var(--teal-dark);font-weight:700;box-shadow:0 2px 8px rgba(0,0,0,0.15);}
   .nav .tag{font-family:'JetBrains Mono';font-size:11px;opacity:.6;}
 
   /* Abas de cliente */
@@ -94,16 +96,17 @@
   /* Main */
   .main{flex:1;padding:36px 44px;max-width:1180px;}
   .topbar{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:28px;}
-  h1{font-family:'Fraunces',serif;font-size:30px;margin:0;font-weight:700;}
+  h1{font-family:'Fraunces',serif;font-size:30px;margin:0;font-weight:700;letter-spacing:-.01em;}
   .subtitle{color:var(--ink-soft);font-size:14px;margin-top:4px;}
   .btn{
-    all:unset;cursor:pointer;background:var(--teal);color:#fff;padding:10px 18px;border-radius:8px;
-    font-size:14px;font-weight:600;display:inline-flex;align-items:center;gap:8px;
+    all:unset;cursor:pointer;background:linear-gradient(155deg, var(--teal), var(--teal-dark));color:#fff;padding:10px 18px;border-radius:9px;
+    font-size:14px;font-weight:600;display:inline-flex;align-items:center;gap:8px;box-shadow:0 2px 6px rgba(18,56,83,0.22);
   }
-  .btn:hover{background:var(--teal-dark);}
-  .btn.rust{background:var(--rust);}
-  .btn.ghost{background:transparent;color:var(--ink-soft);border:1px solid var(--line);}
-  .btn.ghost:hover{background:var(--paper-2);}
+  .btn:hover{filter:brightness(1.08);transform:translateY(-1px);box-shadow:0 5px 14px rgba(18,56,83,0.3);}
+  .btn:active{transform:translateY(0);}
+  .btn.rust{background:linear-gradient(155deg, var(--rust), #7A2F20);box-shadow:0 2px 6px rgba(156,63,45,0.25);}
+  .btn.ghost{background:transparent;color:var(--ink-soft);border:1px solid var(--line);box-shadow:none;}
+  .btn.ghost:hover{background:var(--paper-2);border-color:var(--teal);color:var(--teal-dark);transform:none;box-shadow:none;}
 
   /* Dashboard groups */
   .city-group{margin-bottom:34px;}
@@ -114,9 +117,10 @@
 
   .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;}
   .card{
-    background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px;
+    background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;
     box-shadow:var(--shadow);position:relative;
   }
+  .card:hover{box-shadow:var(--shadow-lg);transform:translateY(-2px);border-color:#C3CBD1;}
   .seal{
     position:absolute;top:14px;right:14px;width:34px;height:34px;border-radius:50%;
     display:flex;align-items:center;justify-content:center;font-family:'Fraunces',serif;font-weight:700;
@@ -134,21 +138,22 @@
   .status.inativo{background:#F2DFDA;color:var(--rust);}
 
   /* Tables */
-  table{width:100%;border-collapse:collapse;background:var(--card);border-radius:12px;overflow:hidden;box-shadow:var(--shadow);}
-  th{text-align:left;font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-soft);
-    padding:12px 16px;border-bottom:1px solid var(--line);background:var(--paper-2);}
+  table{width:100%;border-collapse:collapse;background:var(--card);border-radius:14px;overflow:hidden;box-shadow:var(--shadow);}
+  th{text-align:left;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft);
+    padding:13px 16px;border-bottom:1px solid var(--line);background:var(--paper-2);font-weight:700;}
   td{padding:13px 16px;font-size:13.5px;border-bottom:1px solid var(--line);}
+  tbody tr:hover td{background:var(--paper-2);}
   tr:last-child td{border-bottom:none;}
   .row-actions{display:flex;gap:8px;}
-  .icon-btn{all:unset;cursor:pointer;color:var(--ink-soft);font-size:13px;}
-  .icon-btn:hover{color:var(--teal);}
-  .icon-btn.del:hover{color:var(--rust);}
+  .icon-btn{all:unset;cursor:pointer;color:var(--ink-soft);font-size:13px;padding:2px;border-radius:5px;}
+  .icon-btn:hover{color:var(--teal);background:rgba(31,92,139,0.1);}
+  .icon-btn.del:hover{color:var(--rust);background:rgba(156,63,45,0.1);}
   .pill{font-family:'JetBrains Mono';font-size:11px;background:var(--paper-2);border:1px solid var(--line);padding:2px 8px;border-radius:20px;}
 
   /* Modal */
   .overlay{position:fixed;inset:0;background:rgba(35,38,31,0.45);display:none;align-items:center;justify-content:center;z-index:50;}
   .overlay.show{display:flex;}
-  .modal{background:var(--card);border-radius:14px;padding:26px 28px;width:420px;max-width:92vw;box-shadow:0 20px 60px rgba(0,0,0,0.25);}
+  .modal{background:var(--card);border-radius:16px;padding:26px 28px;width:420px;max-width:92vw;box-shadow:0 24px 70px rgba(10,20,30,0.3);}
   .modal h3{font-family:'Fraunces',serif;margin:0 0 18px;font-size:19px;}
   .field{margin-bottom:14px;}
   .field label{display:block;font-size:12px;font-weight:600;color:var(--ink-soft);margin-bottom:5px;}
@@ -199,7 +204,8 @@
   }
 
   /* RH / Horas panel */
-  .rh-card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:20px 22px;box-shadow:var(--shadow);margin-bottom:16px;}
+  .rh-card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px 22px;box-shadow:var(--shadow);margin-bottom:16px;}
+  .rh-card:hover{box-shadow:var(--shadow-lg);}
   .rh-top{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;}
   .rh-name{font-family:'Fraunces',serif;font-weight:700;font-size:18px;}
   .rh-meta{color:var(--ink-soft);font-size:12.5px;margin-top:2px;}
@@ -554,6 +560,10 @@
 
 <div class="candidate-wrap" id="candidateRoot" style="display:none;">
   <div class="candidate-box" id="candidateBox"></div>
+</div>
+
+<div class="candidate-wrap" id="envioHorasRoot" style="display:none;">
+  <div class="candidate-box" id="envioHorasBox"></div>
 </div>
 
 <button class="ai-fab" id="aiFab" onclick="toggleAIChat()" style="display:none;">💬 Assistente</button>
@@ -1895,6 +1905,9 @@ const urlParams = new URLSearchParams(window.location.search);
 if (urlParams.has('entrevista')){
   document.getElementById('lockScreen').style.display = 'none';
   startCandidateFlow();
+} else if (urlParams.has('enviarHoras')){
+  document.getElementById('lockScreen').style.display = 'none';
+  startEnvioHorasFlow();
 } else {
   initLock();
   generateMountains();
@@ -3219,6 +3232,19 @@ function mudarModoCartoes(modo){
   render();
 }
 
+function copiarLinkEnvioHoras(){
+  const url = `${window.location.origin}${window.location.pathname}?enviarHoras=1`;
+  const avisar = () => showToast('✓ Link copiado — já pode mandar pro trabalhador', false, 2500);
+  const avisarErro = () => {
+    prompt('Copie o link abaixo:', url);
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(url).then(avisar).catch(avisarErro);
+  } else {
+    avisarErro();
+  }
+}
+
 function inicioSemanaISO(date){
   const d = new Date(date);
   const diaSemana = d.getDay(); // 0 = domingo
@@ -3317,9 +3343,12 @@ function renderHoras(main){
 
   let html = `<div class="topbar">
     <div><h1>Horas & RH</h1><div class="subtitle">Registro de horas — cliente ${clienteAtivo ? clienteAtivo.nome : '—'}</div></div>
-    <div style="display:flex;gap:6px;background:var(--paper-2);padding:4px;border-radius:10px;">
-      <button class="btn ${cartoesModoVisualizacao==='mes'?'':'ghost'}" style="padding:7px 14px;font-size:12.5px;" onclick="mudarModoCartoes('mes')">📅 Mês atual</button>
-      <button class="btn ${cartoesModoVisualizacao==='tudo'?'':'ghost'}" style="padding:7px 14px;font-size:12.5px;" onclick="mudarModoCartoes('tudo')">📊 Tudo (histórico)</button>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <button class="btn ghost" onclick="copiarLinkEnvioHoras()">🔗 Link pra trabalhador enviar horas</button>
+      <div style="display:flex;gap:6px;background:var(--paper-2);padding:4px;border-radius:10px;">
+        <button class="btn ${cartoesModoVisualizacao==='mes'?'':'ghost'}" style="padding:7px 14px;font-size:12.5px;" onclick="mudarModoCartoes('mes')">📅 Mês atual</button>
+        <button class="btn ${cartoesModoVisualizacao==='tudo'?'':'ghost'}" style="padding:7px 14px;font-size:12.5px;" onclick="mudarModoCartoes('tudo')">📊 Tudo (histórico)</button>
+      </div>
     </div>
   </div>`;
 
@@ -4517,6 +4546,185 @@ let candidateAnswers = {};
 let candidateStepIndex = 0;
 let candidateContractHTML = '';
 let candidateVaga = null;
+
+/* ================= Envio de horas por foto (link público, ?enviarHoras=1) ================= */
+let envioHorasEstado = { fase: 'selecionar', trabalhadorId: '', imagem: null, resultado: null, erro: '' };
+
+async function startEnvioHorasFlow(){
+  document.getElementById('envioHorasRoot').style.display = 'flex';
+  try{ const r = await fsGet('trabalhadores'); state.trabalhadores = r ? JSON.parse(r.value) : []; }catch(e){ state.trabalhadores = []; }
+  try{ const r2 = await fsGet('empresas'); state.empresas = r2 ? JSON.parse(r2.value) : []; }catch(e){ state.empresas = []; }
+  try{ const r3 = await fsGet('clientes'); state.clientes = r3 ? JSON.parse(r3.value) : []; }catch(e){ state.clientes = []; }
+  envioHorasEstado = { fase: 'selecionar', trabalhadorId: '', imagem: null, resultado: null, erro: '' };
+  renderEnvioHoras();
+}
+
+function empresaNomePublico(empresaId){
+  const e = state.empresas.find(x => x.id === empresaId);
+  return e ? e.nome : '';
+}
+
+function renderEnvioHoras(){
+  const box = document.getElementById('envioHorasBox');
+  const trabsOrdenados = state.trabalhadores.slice().sort((a,b)=> a.nome.localeCompare(b.nome));
+  const opcoes = ['<option value="">— Selecione seu nome —</option>']
+    .concat(trabsOrdenados.map(t => `<option value="${t.id}" ${envioHorasEstado.trabalhadorId===t.id?'selected':''}>${t.nome}${empresaNomePublico(t.empresaId) ? ' — '+empresaNomePublico(t.empresaId) : ''}</option>`))
+    .join('');
+
+  let html = `<div class="candidate-head">
+    <div class="badge">📸</div>
+    <h1>Enviar minhas horas</h1>
+    <p>Escolha seu nome, tire (ou anexe) uma foto legível da folha de horas, e o sistema já registra pra você.</p>
+  </div>`;
+
+  html += `<div class="field" style="margin-bottom:16px;">
+    <label style="display:block;font-size:13px;font-weight:600;color:var(--ink-soft);margin-bottom:6px;">Seu nome</label>
+    <select id="envioHorasTrabalhadorInput" style="width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:10px;font-size:14px;" onchange="envioHorasEstado.trabalhadorId=this.value">${opcoes}</select>
+  </div>`;
+
+  if (envioHorasEstado.imagem){
+    html += `<div class="sign-pad-wrap" style="margin-bottom:16px;">
+      <img src="${envioHorasEstado.imagem.dataUrl}" style="width:100%;border-radius:8px;display:block;">
+    </div>`;
+  }
+
+  html += `<input type="file" id="envioHorasFileInput" accept="image/*" capture="environment" style="display:none;" onchange="onEnvioHorasFileSelected(event)">
+    <button class="btn ghost" style="width:100%;justify-content:center;margin-bottom:10px;" onclick="document.getElementById('envioHorasFileInput').click()">
+      📎 ${envioHorasEstado.imagem ? 'Trocar foto' : 'Tirar ou anexar foto da folha de horas'}
+    </button>`;
+
+  if (envioHorasEstado.fase === 'processando'){
+    html += `<div class="loading" style="padding:30px 0;">Lendo a foto e calculando as horas…</div>`;
+  }
+
+  if (envioHorasEstado.erro){
+    html += `<div class="ai-confirm-card" style="background:#F2DFDA;border-color:#E3A99A;margin-bottom:14px;">
+      <div class="ai-confirm-title" style="color:var(--rust);">⚠️ Não consegui ler direito</div>
+      <div class="ai-confirm-desc">${envioHorasEstado.erro}</div>
+    </div>`;
+  }
+
+  if (envioHorasEstado.fase === 'sucesso' && envioHorasEstado.resultado){
+    const r = envioHorasEstado.resultado;
+    const total = r.entradas.reduce((a,e)=>a+Number(e.horas||0),0);
+    html += `<div class="done-screen" style="padding:20px 0;">
+      <div class="check">✅</div>
+      <h2 style="font-family:'Fraunces',serif;margin:0 0 8px;">Horas registradas!</h2>
+      <p style="color:var(--ink-soft);font-size:14px;">${r.entradas.length} dia(s) · ${total.toLocaleString('pt-PT')}h no total</p>
+      <div style="text-align:left;max-width:280px;margin:16px auto 0;font-size:13px;">
+        ${r.entradas.map(e => `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px dashed var(--line);"><span>${formatDate(e.data)}</span><b>${e.horas}h</b></div>`).join('')}
+      </div>
+      <button class="btn" style="margin-top:20px;" onclick="reiniciarEnvioHoras()">Enviar outra foto</button>
+    </div>`;
+  } else {
+    html += `<button class="btn" style="width:100%;justify-content:center;" ${envioHorasEstado.fase==='processando'?'disabled':''} onclick="processarEnvioHoras()">Enviar e calcular horas</button>`;
+  }
+
+  box.innerHTML = html;
+}
+
+function onEnvioHorasFileSelected(event){
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    const dataUrl = reader.result;
+    const base64 = dataUrl.split(',')[1];
+    envioHorasEstado.imagem = { mimeType: file.type, base64, dataUrl };
+    envioHorasEstado.erro = '';
+    renderEnvioHoras();
+  };
+  reader.readAsDataURL(file);
+  event.target.value = '';
+}
+
+function reiniciarEnvioHoras(){
+  const manterTrabalhador = envioHorasEstado.trabalhadorId;
+  envioHorasEstado = { fase: 'selecionar', trabalhadorId: manterTrabalhador, imagem: null, resultado: null, erro: '' };
+  renderEnvioHoras();
+}
+
+async function analisarFotoHoras(imagem){
+  const promptSistema = `Você lê fotos de folhas de ponto/registro de horas de trabalhadores (formulários escritos à mão ou impressos, em português ou espanhol, tipo "DFNETO LDA" ou "INTEGASA"). A partir da imagem, extraia CADA linha de dia trabalhado com a data e a quantidade de horas daquele dia (se tiver Entrada e Saída em vez de "Horas" já pronta, calcule a diferença). Responda SOMENTE em JSON válido, nesse formato exato, sem nenhum texto antes ou depois:
+{"legivel": true ou false, "entradas": [{"data":"AAAA-MM-DD","horas": numero}], "motivo_ilegivel": "string, só preencha se legivel for false, explicando o que está ruim (foto borrada, cortada, sem números visíveis, etc)"}
+Se não conseguir ler a maior parte da folha com confiança, retorne legivel:false e entradas:[]. Datas devem ser convertidas pro formato AAAA-MM-DD (assuma ano atual se não estiver escrito). Não invente valores que não estão visíveis na imagem.`;
+
+  const body = {
+    contents: [{ role: 'user', parts: [
+      { text: 'Leia essa folha de horas e responda no formato JSON pedido.' },
+      { inlineData: { mimeType: imagem.mimeType, data: imagem.base64 } },
+    ]}],
+    systemInstruction: { parts: [{ text: promptSistema }] },
+    generationConfig: { maxOutputTokens: 1000, responseMimeType: 'application/json' },
+  };
+
+  const tentativas = [];
+  for (const model of GEMINI_MODELS){
+    for (const authMode of ['header', 'query']){
+      tentativas.push({ model, authMode });
+    }
+  }
+  const todosErros = [];
+  for (const t of tentativas){
+    try{
+      const data = await tentarChamadaGemini(t.model, t.authMode, body);
+      const texto = data?.candidates?.[0]?.content?.parts?.map(p=>p.text).join('') || '';
+      if (texto) return JSON.parse(texto);
+      todosErros.push(`[${t.model}/${t.authMode}] resposta vazia`);
+    }catch(e){
+      todosErros.push(e.message);
+    }
+  }
+  throw new Error('Não consegui analisar a foto agora (' + todosErros.join(' | ') + ').');
+}
+
+async function processarEnvioHoras(){
+  const trabalhadorId = document.getElementById('envioHorasTrabalhadorInput').value;
+  if (!trabalhadorId){ envioHorasEstado.erro = 'Escolha seu nome antes de enviar.'; renderEnvioHoras(); return; }
+  if (!envioHorasEstado.imagem){ envioHorasEstado.erro = 'Anexe uma foto da folha de horas antes de enviar.'; renderEnvioHoras(); return; }
+
+  envioHorasEstado.trabalhadorId = trabalhadorId;
+  envioHorasEstado.fase = 'processando';
+  envioHorasEstado.erro = '';
+  renderEnvioHoras();
+
+  try{
+    const resultado = await analisarFotoHoras(envioHorasEstado.imagem);
+    if (!resultado.legivel || !resultado.entradas || resultado.entradas.length === 0){
+      envioHorasEstado.fase = 'selecionar';
+      envioHorasEstado.erro = resultado.motivo_ilegivel || 'A foto não ficou clara o suficiente pra ler as horas. Tenta tirar de novo com mais luz, sem cortar a folha e sem reflexo.';
+      renderEnvioHoras();
+      return;
+    }
+
+    const trab = state.trabalhadores.find(t => t.id === trabalhadorId);
+    if (!trab) throw new Error('Trabalhador não encontrado — atualize a página e tente de novo.');
+    if (!trab.horas) trab.horas = [];
+
+    const empresaId = trab.empresaId || null;
+    const valorHora = trab.valorHora || 0;
+    const datasEnviadas = new Set(resultado.entradas.map(e => e.data));
+    // remove entradas antigas da MESMA empresa nessas mesmas datas, pra não duplicar se reenviar
+    trab.horas = trab.horas.filter(h => !(datasEnviadas.has(h.data) && empresaIdEntrada(h, trab) === (empresaId||'')));
+    resultado.entradas.forEach(e => {
+      const qtd = Number(e.horas);
+      if (e.data && qtd > 0){
+        trab.horas.push({ id: uid(), data: e.data, quantidade: qtd, empresaId, valorHora });
+      }
+    });
+
+    await fsSet('trabalhadores', JSON.stringify(state.trabalhadores));
+    tursoBackupSet('trabalhadores', JSON.stringify(state.trabalhadores));
+
+    envioHorasEstado.fase = 'sucesso';
+    envioHorasEstado.resultado = resultado;
+    renderEnvioHoras();
+  }catch(e){
+    envioHorasEstado.fase = 'selecionar';
+    envioHorasEstado.erro = 'Deu um erro ao processar: ' + e.message + '. Tenta de novo.';
+    renderEnvioHoras();
+  }
+}
 
 async function startCandidateFlow(){
   document.getElementById('candidateRoot').style.display = 'flex';
