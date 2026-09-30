@@ -192,6 +192,9 @@
     .print-only{display:block !important;margin-bottom:20px;}
     body{background:#fff !important;}
     table{box-shadow:none;border:1px solid #ccc;}
+    tr{page-break-inside:avoid;break-inside:avoid;}
+    .report-page{page-break-inside:auto;}
+    thead{display:table-header-group;}
   }
 
   /* Celular / tela estreita */
@@ -3381,15 +3384,16 @@ function renderHoras(main){
     <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:14px;">
       <div><label style="font-size:12px;color:var(--ink-soft);display:block;margin-bottom:4px;">De</label><input type="date" id="reportStartInput" value="${reportStart}" style="padding:8px 10px;border:1px solid var(--line);border-radius:8px;font-family:'JetBrains Mono';"></div>
       <div><label style="font-size:12px;color:var(--ink-soft);display:block;margin-bottom:4px;">Até</label><input type="date" id="reportEndInput" value="${reportEnd}" style="padding:8px 10px;border:1px solid var(--line);border-radius:8px;font-family:'JetBrains Mono';"></div>
-      <div><label style="font-size:12px;color:var(--ink-soft);display:block;margin-bottom:4px;">Empresa</label><select id="reportEmpresaInput" style="padding:8px 10px;border:1px solid var(--line);border-radius:8px;">${empresaOpcoes}</select></div>
+      <div><label style="font-size:12px;color:var(--ink-soft);display:block;margin-bottom:4px;">Empresa</label><select id="reportEmpresaInput" onchange="aplicarFiltroChecklistTrabalhadores()" style="padding:8px 10px;border:1px solid var(--line);border-radius:8px;">${empresaOpcoes}</select></div>
       <div style="min-width:230px;">
         <label style="font-size:12px;color:var(--ink-soft);display:block;margin-bottom:4px;">Trabalhadores (um, vários ou todos)</label>
+        <input type="text" id="reportTrabalhadorBusca" placeholder="🔍 Buscar por nome…" oninput="aplicarFiltroChecklistTrabalhadores()" style="width:100%;padding:6px 10px;border:1px solid var(--line);border-radius:8px;font-size:12.5px;margin-bottom:6px;">
         <div style="display:flex;gap:6px;margin-bottom:6px;">
           <button type="button" class="btn ghost" style="padding:4px 10px;font-size:11px;" onclick="marcarTrabalhadoresRelatorio(true)">Marcar todos</button>
           <button type="button" class="btn ghost" style="padding:4px 10px;font-size:11px;" onclick="marcarTrabalhadoresRelatorio(false)">Desmarcar todos</button>
         </div>
         <div id="reportTrabalhadoresCheckboxes" style="border:1px solid var(--line);border-radius:8px;background:var(--paper-2);max-height:150px;overflow-y:auto;overflow-x:auto;padding:8px 10px;min-width:220px;">
-          ${trabsCliente.map(t=>`<label style="display:flex;align-items:center;gap:7px;font-size:13px;padding:3px 0;cursor:pointer;white-space:nowrap;">
+          ${trabsCliente.map(t=>`<label class="report-trab-label" data-nome="${t.nome.toLowerCase()}" data-empresa="${t.empresaId||''}" style="display:flex;align-items:center;gap:7px;font-size:13px;padding:3px 0;cursor:pointer;white-space:nowrap;">
             <input type="checkbox" class="report-trab-chk" value="${t.id}" ${(reportTrabalhadorFiltro==='todos' || (Array.isArray(reportTrabalhadorFiltro) && reportTrabalhadorFiltro.includes(t.id))) ? 'checked' : ''}>
             <span><b>${t.nome}</b>${t.iban ? ` <span style="color:var(--ink-soft);font-family:'JetBrains Mono';font-size:11px;">— ${t.iban}</span>` : ' <span style="color:var(--ink-soft);font-size:11px;">— sem IBAN</span>'}</span>
           </label>`).join('') || '<span style="font-size:12.5px;color:var(--ink-soft);">Nenhum trabalhador cadastrado.</span>'}
@@ -3489,6 +3493,18 @@ function gerarRelatorio(){
 
 function marcarTrabalhadoresRelatorio(marcar){
   document.querySelectorAll('.report-trab-chk').forEach(chk => { chk.checked = marcar; });
+}
+
+function aplicarFiltroChecklistTrabalhadores(){
+  const buscaEl = document.getElementById('reportTrabalhadorBusca');
+  const empresaEl = document.getElementById('reportEmpresaInput');
+  const q = buscaEl ? buscaEl.value.trim().toLowerCase() : '';
+  const empresaId = empresaEl ? empresaEl.value : 'todas';
+  document.querySelectorAll('.report-trab-label').forEach(label => {
+    const bateNome = !q || (label.dataset.nome||'').includes(q);
+    const bateEmpresa = empresaId === 'todas' || label.dataset.empresa === empresaId;
+    label.style.display = (bateNome && bateEmpresa) ? 'flex' : 'none';
+  });
 }
 
 function alterarDescontoRelatorio(trabId, valor){
