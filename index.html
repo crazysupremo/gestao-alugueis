@@ -192,7 +192,8 @@
     .app{display:block !important;}
     .print-only{display:block !important;margin-bottom:20px;}
     body{background:#fff !important;}
-    table{box-shadow:none;border:1px solid #ccc;table-layout:auto;width:100%;}
+    table{box-shadow:none;border:1px solid #ccc;table-layout:fixed;width:100% !important;max-width:100% !important;}
+    table td, table th{overflow-wrap:anywhere;word-break:break-word;}
     tr{page-break-inside:avoid;break-inside:avoid;}
     .report-page{page-break-inside:auto;}
     thead{display:table-header-group;}
@@ -3715,9 +3716,9 @@ function renderRelatorio(main){
         </td>
       </tr>`;
       if (reportShowDias){
-        const diasHtml = l.entries.map(e => `${formatDate(e.data)}: <b>${e.quantidade}h</b>`).join(' &nbsp;·&nbsp; ');
+        const diasHtml = l.entries.map(e => `${formatDate(e.data)}: <b>${e.quantidade}h</b>`).join(' · ');
         const colspan = 1 + (reportShowHoras?1:0) + (reportShowValor?2:0) + (reportShowIban?1:0) + (reportShowDesconto?1:0) + 1;
-        html += `<tr><td colspan="${colspan}" style="background:var(--paper-2);font-size:12px;color:var(--ink-soft);padding:6px 16px;">${diasHtml || T.semDias}</td></tr>`;
+        html += `<tr><td colspan="${colspan}" style="background:var(--paper-2);font-size:12px;color:var(--ink-soft);padding:6px 16px;white-space:normal;overflow-wrap:anywhere;word-break:break-word;max-width:0;">${diasHtml || T.semDias}</td></tr>`;
       }
     });
 
