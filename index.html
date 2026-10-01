@@ -167,6 +167,7 @@
   .icon-btn:hover{color:var(--teal);background:rgba(31,92,139,0.1);}
   .icon-btn.del:hover{color:var(--rust);background:rgba(156,63,45,0.1);}
   .pill{font-family:'JetBrains Mono';font-size:11px;background:var(--paper-2);border:1px solid var(--line);padding:2px 8px;border-radius:20px;}
+  .iban-col{white-space:nowrap;}
 
   /* Modal */
   .overlay{position:fixed;inset:0;background:rgba(35,38,31,0.45);display:none;align-items:center;justify-content:center;z-index:50;}
@@ -191,10 +192,15 @@
     .app{display:block !important;}
     .print-only{display:block !important;margin-bottom:20px;}
     body{background:#fff !important;}
-    table{box-shadow:none;border:1px solid #ccc;}
+    table{box-shadow:none;border:1px solid #ccc;table-layout:auto;width:100%;}
     tr{page-break-inside:avoid;break-inside:avoid;}
     .report-page{page-break-inside:auto;}
     thead{display:table-header-group;}
+    @page{margin:10mm;}
+    body, table, td, th{font-size:11px !important;}
+    .iban-col{white-space:normal !important;word-break:break-all;font-size:9.5px !important;}
+    h1{font-size:20px !important;}
+    .rh-name, h2{font-size:15px !important;}
   }
 
   /* Celular / tela estreita */
@@ -3694,7 +3700,7 @@ function renderRelatorio(main){
         <td><b>${l.trab.nome}</b></td>
         ${reportShowHoras ? `<td>${l.horas.toLocaleString('pt-PT')}h${badge200Horas(l.horas)}</td>` : ''}
         ${reportShowValor ? `<td>€${l.valorHora.toLocaleString('pt-PT',{minimumFractionDigits:2, maximumFractionDigits:2})}</td><td><b>€${l.total.toLocaleString('pt-PT',{minimumFractionDigits:2, maximumFractionDigits:2})}</b></td>` : ''}
-        ${reportShowIban ? `<td style="font-family:'JetBrains Mono';font-size:11.5px;white-space:nowrap;">${l.trab.iban || '—'}</td>` : ''}
+        ${reportShowIban ? `<td class="iban-col" style="font-family:'JetBrains Mono';font-size:11.5px;">${l.trab.iban || '—'}</td>` : ''}
         ${reportShowDesconto ? `<td>
           <select class="no-print" onchange="alterarDescontoRelatorio('${l.trab.id}', this.value)" style="padding:3px 6px;border:1px solid var(--line);border-radius:6px;font-size:12.5px;background:#fff;">
             <option value="normal" ${l.trab.desconto!=='220' ? 'selected' : ''}>Normal</option>
