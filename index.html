@@ -2509,11 +2509,12 @@ function renderImoveis(main){
     html += `<div class="empty">Ainda não há imóveis para ${clienteAtivo ? clienteAtivo.nome : 'este cliente'}.</div>`;
   } else {
     html += `<table><thead><tr>
-      <th>Nome</th><th>Cidade</th><th>Endereço</th><th>Empresa</th><th>Aluguel</th><th>Vencimento</th><th>IBAN</th><th>Status</th><th></th>
+      <th>Nome</th><th>Cidade</th><th>Endereço</th><th>Empresa</th><th>Aluguel</th><th>Vencimento</th><th>IBAN</th><th>Status</th><th>Trabalhadores</th><th></th>
     </tr></thead><tbody>`;
     imoveisCliente.forEach(im => {
       const c = cityMeta(im.cidade);
       const venc = diasParaVencimento(im.diaVencimento);
+      const moradores = state.trabalhadores.filter(t => t.imovelId === im.id);
       html += `<tr id="row-${im.id}">
         <td><b>${im.nome}</b></td>
         <td><span class="pill">${c.label}</span></td>
@@ -2523,7 +2524,9 @@ function renderImoveis(main){
         <td>${im.diaVencimento ? `Dia ${im.diaVencimento} ${venc !== null ? `<span style="color:${venc<=5?'var(--rust)':'var(--ink-soft)'};font-size:11.5px;">(${venc}d)</span>` : ''}` : '—'}</td>
         <td style="font-family:'JetBrains Mono';font-size:11.5px;">${im.ibanAluguel || '—'}</td>
         <td><span class="status ${im.status}">${im.status === 'ativo' ? 'Ativo' : 'Inativo'}</span></td>
+        <td>${moradores.length ? moradores.map(m=>`<span class="pill" style="margin:2px;">${m.nome}</span>`).join('') : '<span style="color:var(--ink-soft);font-size:12px;">— ninguém —</span>'}</td>
         <td class="row-actions">
+          <button class="icon-btn" title="Vincular trabalhador(es) a esse imóvel" onclick="openVincularMoradoresForm('${im.id}')">👥</button>
           <button class="icon-btn" onclick="openImovelForm('${im.id}')">✏️</button>
           <button class="icon-btn del" onclick="deleteItem('imoveis','${im.id}')">🗑️</button>
         </td>
@@ -2655,6 +2658,41 @@ function saveBulkImoveis(){
   });
   persist('imoveis');
   closeModal();
+  render();
+}
+
+function openVincularMoradoresForm(imovelId){
+  const imovel = state.imoveis.find(i => i.id === imovelId);
+  if (!imovel){ alert('Imóvel não encontrado.'); return; }
+  const trabs = trabalhadoresDoClienteAtivo();
+  const linhas = trabs.map(t => `<label style="display:flex;align-items:center;gap:8px;font-size:13.5px;padding:5px 0;cursor:pointer;">
+    <input type="checkbox" class="chk-morador" value="${t.id}" ${t.imovelId===imovelId?'checked':''}>
+    <span>${t.nome} ${t.imovelId && t.imovelId!==imovelId ? `<span style="color:var(--ink-soft);font-size:11.5px;">(hoje em ${imovelNome(t.imovelId)})</span>` : ''}</span>
+  </label>`).join('') || '<div class="no-entries">Nenhum trabalhador cadastrado ainda.</div>';
+
+  document.getElementById('modalBody').innerHTML = `
+    <h3>Vincular trabalhadores — ${imovel.nome}</h3>
+    <div style="font-size:12.5px;color:var(--ink-soft);margin-bottom:14px;">Marque quem mora/fica nesse imóvel. Quem já estiver marcado em outro imóvel muda pra esse ao salvar.</div>
+    <div style="max-height:280px;overflow-y:auto;border:1px solid var(--line);border-radius:8px;padding:10px 14px;background:var(--paper-2);margin-bottom:10px;">${linhas}</div>
+    <div class="modal-actions">
+      <button class="btn ghost" onclick="closeModal()">Cancelar</button>
+      <button class="btn" onclick="salvarVinculoMoradores('${imovelId}')">Salvar</button>
+    </div>`;
+  showModal();
+}
+
+function salvarVinculoMoradores(imovelId){
+  const marcados = new Set(Array.from(document.querySelectorAll('.chk-morador:checked')).map(c => c.value));
+  trabalhadoresDoClienteAtivo().forEach(t => {
+    if (marcados.has(t.id)){
+      t.imovelId = imovelId;
+    } else if (t.imovelId === imovelId){
+      t.imovelId = null;
+    }
+  });
+  persist('trabalhadores');
+  closeModal();
+  showToast('✓ Vínculos atualizados', false, 1800);
   render();
 }
 
