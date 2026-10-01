@@ -1115,7 +1115,7 @@ function acaoCriarImovel(nome, cidade, endereco, nomeEmpresa, valorAluguel, diaV
 
 function acaoEditarImovel(nomeAtual, valorAluguel, diaVencimento, status){
   const idsEmpresasCliente = new Set(empresasDoClienteAtivo().map(e=>e.id));
-  const match = state.imoveis.find(im => idsEmpresasCliente.has(im.empresaId) && im.nome.toLowerCase().includes(String(nomeAtual).toLowerCase()));
+  const match = state.imoveis.find(im => (idsEmpresasCliente.has(im.empresaId) || im.clienteId === clienteAtivoId) && im.nome.toLowerCase().includes(String(nomeAtual).toLowerCase()));
   if (!match) return { sucesso:false, mensagem: `Não encontrei nenhum imóvel chamado "${nomeAtual}".` };
   if (valorAluguel) match.valor = valorAluguel;
   if (diaVencimento) match.diaVencimento = diaVencimento;
@@ -1127,7 +1127,7 @@ function acaoEditarImovel(nomeAtual, valorAluguel, diaVencimento, status){
 
 function acaoRemoverImovel(nomeImovel){
   const idsEmpresasCliente = new Set(empresasDoClienteAtivo().map(e=>e.id));
-  const match = state.imoveis.find(im => idsEmpresasCliente.has(im.empresaId) && im.nome.toLowerCase().includes(String(nomeImovel).toLowerCase()));
+  const match = state.imoveis.find(im => (idsEmpresasCliente.has(im.empresaId) || im.clienteId === clienteAtivoId) && im.nome.toLowerCase().includes(String(nomeImovel).toLowerCase()));
   if (!match) return { sucesso:false, mensagem: `Não encontrei nenhum imóvel chamado "${nomeImovel}".` };
   state.imoveis = state.imoveis.filter(im => im.id !== match.id);
   persist('imoveis');
@@ -1296,7 +1296,7 @@ function currentAdminContext(){
   const vencendo = imoveisVencendoEmBreve(7);
   const vagasCliente = vagasDoClienteAtivo();
   const idsEmpresasCliente = new Set(empresasCliente.map(e=>e.id));
-  const imoveisCliente = state.imoveis.filter(im => idsEmpresasCliente.has(im.empresaId));
+  const imoveisCliente = state.imoveis.filter(im => (idsEmpresasCliente.has(im.empresaId) || im.clienteId === clienteAtivoId));
 
   const now = new Date();
   const inicioMes = dataLocalISO(new Date(now.getFullYear(), now.getMonth(), 1));
@@ -1997,6 +1997,28 @@ async function loadAll(){
     if (precisaSalvarEmpresas) await persist('empresas');
     if (precisaSalvarVagas) await persist('vagas');
   }
+
+  // Migração: resgata imóveis "órfãos" (sem clienteId gravado e cuja empresa, se tiver,
+  // não aponta pra nenhum cliente existente) — antes disso eles ficavam salvos no banco
+  // mas invisíveis na tela pra sempre, parecendo que o cadastro não tinha funcionado.
+  if (state.clientes.length > 0){
+    const idsClientesValidos = new Set(state.clientes.map(c=>c.id));
+    const clienteDaEmpresa = {};
+    state.empresas.forEach(e => { clienteDaEmpresa[e.id] = e.clienteId; });
+    let precisaSalvarImoveis = false;
+    state.imoveis.forEach(im => {
+      const resolvido = im.clienteId || clienteDaEmpresa[im.empresaId];
+      if (!resolvido || !idsClientesValidos.has(resolvido)){
+        im.clienteId = state.clientes[0].id;
+        precisaSalvarImoveis = true;
+      } else if (!im.clienteId){
+        im.clienteId = resolvido;
+        precisaSalvarImoveis = true;
+      }
+    });
+    if (precisaSalvarImoveis) await persist('imoveis');
+  }
+
   clienteAtivoId = state.clientes[0].id;
   travarClienteParaUsuario();
 
@@ -2187,7 +2209,7 @@ function onGlobalSearch(termo){
     if (e.nome.toLowerCase().includes(q)) resultados.push({ tipo:'Empresa', label:e.nome, sub:'', view:'empresas', id:e.id });
   });
   const idsEmpresasCliente = new Set(empresasDoClienteAtivo().map(e=>e.id));
-  state.imoveis.filter(im => idsEmpresasCliente.has(im.empresaId)).forEach(im => {
+  state.imoveis.filter(im => (idsEmpresasCliente.has(im.empresaId) || im.clienteId === clienteAtivoId)).forEach(im => {
     if (im.nome.toLowerCase().includes(q)) resultados.push({ tipo:'Imóvel', label:im.nome, sub: cityMeta(im.cidade).label, view:'imoveis', id:im.id });
   });
   vagasDoClienteAtivo().forEach(v => {
@@ -2307,7 +2329,7 @@ function calcularIndicadoresDashboard(){
   const trabsCliente = trabalhadoresDoClienteAtivo();
   const empresasCliente = empresasDoClienteAtivo();
   const idsEmpresasCliente = new Set(empresasCliente.map(e=>e.id));
-  const imoveisAtivos = state.imoveis.filter(i => i.status!=='inativo' && idsEmpresasCliente.has(i.empresaId)).length;
+  const imoveisAtivos = state.imoveis.filter(i => i.status!=='inativo' && (idsEmpresasCliente.has(i.empresaId) || i.clienteId === clienteAtivoId)).length;
 
   const trabalhadoresAtivos = trabsCliente.length;
   const empresasClientes = empresasCliente.length;
@@ -2411,7 +2433,7 @@ function renderDashboard(main){
   }
 
   const idsEmpresasCliente = new Set(empresasDoClienteAtivo().map(e=>e.id));
-  const imoveisCliente = state.imoveis.filter(i => idsEmpresasCliente.has(i.empresaId));
+  const imoveisCliente = state.imoveis.filter(i => (idsEmpresasCliente.has(i.empresaId) || i.clienteId === clienteAtivoId));
   const grouped = {};
   CITIES.forEach(c => grouped[c.id] = imoveisCliente.filter(i => i.cidade === c.id));
 
@@ -2487,7 +2509,7 @@ function renderImoveis(main){
   defaultReportMonth();
   const clienteAtivo = state.clientes.find(c=>c.id===clienteAtivoId);
   const idsEmpresasCliente = new Set(empresasDoClienteAtivo().map(e=>e.id));
-  const imoveisCliente = state.imoveis.filter(i => idsEmpresasCliente.has(i.empresaId));
+  const imoveisCliente = state.imoveis.filter(i => (idsEmpresasCliente.has(i.empresaId) || i.clienteId === clienteAtivoId));
 
   let html = `<div class="topbar">
     <div><h1>Imóveis</h1><div class="subtitle">Propriedades alugadas — cliente ${clienteAtivo ? clienteAtivo.nome : '—'}</div></div>
@@ -2555,7 +2577,7 @@ function renderRelatorioAlugueis(main){
   const mes = reportMonth;
   const clienteAtivo = state.clientes.find(c=>c.id===clienteAtivoId);
   const idsEmpresasCliente = new Set(empresasDoClienteAtivo().map(e=>e.id));
-  const ativos = state.imoveis.filter(im => im.status !== 'inativo' && im.valor && idsEmpresasCliente.has(im.empresaId));
+  const ativos = state.imoveis.filter(im => im.status !== 'inativo' && im.valor && (idsEmpresasCliente.has(im.empresaId) || im.clienteId === clienteAtivoId));
 
   const grandTotal = ativos.reduce((a,im)=>a+Number(im.valor||0),0);
 
@@ -2604,7 +2626,7 @@ function renderRelatorioAlugueis(main){
 
 function exportarCSVAlugueis(mes){
   const idsEmpresasCliente = new Set(empresasDoClienteAtivo().map(e=>e.id));
-  const ativos = state.imoveis.filter(im => im.status !== 'inativo' && im.valor && idsEmpresasCliente.has(im.empresaId));
+  const ativos = state.imoveis.filter(im => im.status !== 'inativo' && im.valor && (idsEmpresasCliente.has(im.empresaId) || im.clienteId === clienteAtivoId));
   let csv = 'Imovel,Cidade,Endereco,Empresa,ValorMensal,DiaVencimento,IBAN\n';
   ativos.forEach(im => {
     const c = cityMeta(im.cidade);
@@ -2654,6 +2676,7 @@ function saveBulkImoveis(){
       empresaId: null,
       valor: '',
       status: 'ativo',
+      clienteId: clienteAtivoId,
     });
   });
   persist('imoveis');
@@ -2725,6 +2748,7 @@ function openImovelForm(id){
 function saveImovel(id){
   const nome = document.getElementById('f_nome').value.trim();
   if (!nome){ alert('Dê um nome ao imóvel.'); return; }
+  const existing = id ? state.imoveis.find(i=>i.id===id) : null;
   const data = {
     id: id || uid(),
     nome,
@@ -2735,6 +2759,10 @@ function saveImovel(id){
     diaVencimento: document.getElementById('f_vencimento').value || '',
     ibanAluguel: document.getElementById('f_iban_aluguel').value.trim().toUpperCase(),
     status: document.getElementById('f_status').value,
+    // guarda o cliente direto no imóvel — assim ele continua aparecendo mesmo se
+    // "Empresa vinculada" ficar em branco (sem isso, um imóvel sem empresa ficava
+    // invisível na lista, parecendo que não tinha sido salvo)
+    clienteId: existing ? (existing.clienteId || clienteAtivoId) : clienteAtivoId,
   };
   const idx = state.imoveis.findIndex(i=>i.id===id);
   if (idx >= 0) state.imoveis[idx] = data; else state.imoveis.push(data);
@@ -4343,7 +4371,7 @@ function renderRelatorioGeral(main){
   const empresasCliente = empresasDoClienteAtivo();
   const trabsCliente = trabalhadoresDoClienteAtivo();
   const idsEmpresasCliente = new Set(empresasCliente.map(e=>e.id));
-  const imoveisCliente = state.imoveis.filter(im => idsEmpresasCliente.has(im.empresaId));
+  const imoveisCliente = state.imoveis.filter(im => (idsEmpresasCliente.has(im.empresaId) || im.clienteId === clienteAtivoId));
 
   let html = `<div class="topbar no-print">
     <div><h1>Relatório Geral</h1><div class="subtitle">${clienteAtivo ? clienteAtivo.nome : '—'} · Empresas, imóveis e trabalhadores — tudo num só documento</div></div>
@@ -4430,7 +4458,7 @@ function exportarCSVRelatorioGeral(){
   const empresasCliente = empresasDoClienteAtivo();
   const trabsCliente = trabalhadoresDoClienteAtivo();
   const idsEmpresasCliente = new Set(empresasCliente.map(e=>e.id));
-  const imoveisCliente = state.imoveis.filter(im => idsEmpresasCliente.has(im.empresaId));
+  const imoveisCliente = state.imoveis.filter(im => (idsEmpresasCliente.has(im.empresaId) || im.clienteId === clienteAtivoId));
 
   let csv = 'RELATORIO GERAL\n\n';
   csv += 'EMPRESAS\nNome,CIF/NIF,Contato,NumTrabalhadores,NumImoveis\n';
