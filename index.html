@@ -3375,16 +3375,24 @@ function renderHoras(main){
 
   html += renderPainelAvisos();
 
-  const empresaOpcoes = ['<option value="todas">Todas as empresas (separadas por página)</option>']
-    .concat(empresasCliente.map(e => `<option value="${e.id}" ${reportEmpresaFiltro===e.id?'selected':''}>${e.nome}</option>`))
-    .join('');
-
   html += `<div class="rh-card" style="margin-bottom:20px;">
     <div class="rh-name" style="margin-bottom:10px;">Relatório de horas e valores a pagar (para contabilidade / folha de pagamento)</div>
     <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:14px;">
       <div><label style="font-size:12px;color:var(--ink-soft);display:block;margin-bottom:4px;">De</label><input type="date" id="reportStartInput" value="${reportStart}" style="padding:8px 10px;border:1px solid var(--line);border-radius:8px;font-family:'JetBrains Mono';"></div>
       <div><label style="font-size:12px;color:var(--ink-soft);display:block;margin-bottom:4px;">Até</label><input type="date" id="reportEndInput" value="${reportEnd}" style="padding:8px 10px;border:1px solid var(--line);border-radius:8px;font-family:'JetBrains Mono';"></div>
-      <div><label style="font-size:12px;color:var(--ink-soft);display:block;margin-bottom:4px;">Empresa</label><select id="reportEmpresaInput" onchange="aplicarFiltroChecklistTrabalhadores()" style="padding:8px 10px;border:1px solid var(--line);border-radius:8px;">${empresaOpcoes}</select></div>
+      <div style="min-width:200px;">
+        <label style="font-size:12px;color:var(--ink-soft);display:block;margin-bottom:4px;">Empresas (uma, várias ou todas)</label>
+        <div style="display:flex;gap:6px;margin-bottom:6px;">
+          <button type="button" class="btn ghost" style="padding:4px 10px;font-size:11px;" onclick="marcarEmpresasRelatorio(true)">Marcar todas</button>
+          <button type="button" class="btn ghost" style="padding:4px 10px;font-size:11px;" onclick="marcarEmpresasRelatorio(false)">Desmarcar todas</button>
+        </div>
+        <div id="reportEmpresasCheckboxes" style="border:1px solid var(--line);border-radius:8px;background:var(--paper-2);max-height:150px;overflow-y:auto;padding:8px 10px;min-width:190px;">
+          ${empresasCliente.map(e=>`<label style="display:flex;align-items:center;gap:7px;font-size:13px;padding:3px 0;cursor:pointer;white-space:nowrap;">
+            <input type="checkbox" class="report-empresa-chk" value="${e.id}" onchange="aplicarFiltroChecklistTrabalhadores()" ${(reportEmpresaFiltro==='todas' || (Array.isArray(reportEmpresaFiltro) && reportEmpresaFiltro.includes(e.id))) ? 'checked' : ''}>
+            <span>${e.nome}</span>
+          </label>`).join('') || '<span style="font-size:12.5px;color:var(--ink-soft);">Nenhuma empresa cadastrada.</span>'}
+        </div>
+      </div>
       <div style="min-width:230px;">
         <label style="font-size:12px;color:var(--ink-soft);display:block;margin-bottom:4px;">Trabalhadores (um, vários ou todos)</label>
         <input type="text" id="reportTrabalhadorBusca" placeholder="🔍 Buscar por nome…" oninput="aplicarFiltroChecklistTrabalhadores()" style="width:100%;padding:6px 10px;border:1px solid var(--line);border-radius:8px;font-size:12.5px;margin-bottom:6px;">
@@ -3476,8 +3484,15 @@ function gerarRelatorio(){
   reportShowDias = document.getElementById('chkDias').checked;
   reportShowIban = document.getElementById('chkIban').checked;
   reportShowDesconto = document.getElementById('chkDesconto').checked;
-  reportEmpresaFiltro = document.getElementById('reportEmpresaInput').value;
   reportLang = document.getElementById('reportLangInput').value;
+
+  const checkboxesEmpresa = Array.from(document.querySelectorAll('.report-empresa-chk'));
+  const empresasMarcadas = checkboxesEmpresa.filter(c => c.checked).map(c => c.value);
+  if (checkboxesEmpresa.length > 0 && empresasMarcadas.length === checkboxesEmpresa.length){
+    reportEmpresaFiltro = 'todas';
+  } else {
+    reportEmpresaFiltro = empresasMarcadas; // array com 0, 1, 2, 3... empresas selecionadas
+  }
 
   const checkboxesTrab = Array.from(document.querySelectorAll('.report-trab-chk'));
   const idsMarcados = checkboxesTrab.filter(c => c.checked).map(c => c.value);
@@ -3495,14 +3510,20 @@ function marcarTrabalhadoresRelatorio(marcar){
   document.querySelectorAll('.report-trab-chk').forEach(chk => { chk.checked = marcar; });
 }
 
+function marcarEmpresasRelatorio(marcar){
+  document.querySelectorAll('.report-empresa-chk').forEach(chk => { chk.checked = marcar; });
+  aplicarFiltroChecklistTrabalhadores();
+}
+
 function aplicarFiltroChecklistTrabalhadores(){
   const buscaEl = document.getElementById('reportTrabalhadorBusca');
-  const empresaEl = document.getElementById('reportEmpresaInput');
   const q = buscaEl ? buscaEl.value.trim().toLowerCase() : '';
-  const empresaId = empresaEl ? empresaEl.value : 'todas';
+  const checkboxesEmpresa = Array.from(document.querySelectorAll('.report-empresa-chk'));
+  const empresasMarcadas = checkboxesEmpresa.filter(c => c.checked).map(c => c.value);
+  const todasMarcadas = checkboxesEmpresa.length > 0 && empresasMarcadas.length === checkboxesEmpresa.length;
   document.querySelectorAll('.report-trab-label').forEach(label => {
     const bateNome = !q || (label.dataset.nome||'').includes(q);
-    const bateEmpresa = empresaId === 'todas' || label.dataset.empresa === empresaId;
+    const bateEmpresa = todasMarcadas || empresasMarcadas.length === 0 || empresasMarcadas.includes(label.dataset.empresa);
     label.style.display = (bateNome && bateEmpresa) ? 'flex' : 'none';
   });
 }
@@ -3585,7 +3606,7 @@ function linhasRelatorio(start, end){
 function aplicarFiltrosRelatorio(linhas){
   let out = linhas;
   if (reportEmpresaFiltro !== 'todas'){
-    out = out.filter(l => l.empresaId === reportEmpresaFiltro);
+    out = out.filter(l => reportEmpresaFiltro.includes(l.empresaId));
   }
   if (reportTrabalhadorFiltro !== 'todos'){
     out = out.filter(l => reportTrabalhadorFiltro.includes(l.trab.id));
