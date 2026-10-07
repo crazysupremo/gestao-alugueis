@@ -3788,7 +3788,7 @@ function renderRelatorio(main){
       html += `<tbody class="trab-group">
       <tr>
         <td><b>${l.trab.nome}</b></td>
-        ${reportShowHoras ? `<td>${l.horas.toLocaleString('pt-PT')}h${badge200Horas(l.horas)}</td>` : ''}
+        ${reportShowHoras ? `<td>${l.horas.toLocaleString('pt-PT')}h</td>` : ''}
         ${reportShowValor ? `<td>€${l.valorHora.toLocaleString('pt-PT',{minimumFractionDigits:2, maximumFractionDigits:2})}</td><td><b>€${l.total.toLocaleString('pt-PT',{minimumFractionDigits:2, maximumFractionDigits:2})}</b></td>` : ''}
         ${reportShowIban ? `<td class="iban-col" style="font-family:'JetBrains Mono';font-size:11.5px;">${l.trab.iban || '—'}</td>` : ''}
         ${reportShowDesconto ? `<td>
