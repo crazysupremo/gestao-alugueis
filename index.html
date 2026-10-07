@@ -3284,6 +3284,9 @@ let reportAutoDesconto = true;
 let reportEmpresaFiltro = 'todas';
 let reportTrabalhadorFiltro = 'todos';
 let reportLang = 'pt';
+// 'empresa' = separado por empresa (pra mandar pra cada empresa conferir horas / fazer fatura)
+// 'trabalhador' = tudo junto por pessoa, somando todas as empresas (pra mandar pro contador fazer a folha)
+let reportAgrupamento = 'empresa';
 
 const REPORT_I18N = {
   pt: {
@@ -3454,7 +3457,19 @@ function renderHoras(main){
     <div class="rh-name" style="margin-bottom:2px;">📊 Relatório de horas e valores a pagar</div>
     <div class="rh-meta" style="margin-bottom:18px;">Pronto pra mandar pra contabilidade / folha de pagamento</div>
 
-    <div class="section-title" style="margin-top:0;">1 · Período</div>
+    <div class="section-title" style="margin-top:0;">1 · Pra que é esse relatório?</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px;margin-bottom:20px;">
+      <label style="display:flex;gap:10px;align-items:flex-start;background:${reportAgrupamento==='empresa'?'#DEEDE9':'var(--paper-2)'};border:1.5px solid ${reportAgrupamento==='empresa'?'var(--teal)':'var(--line)'};border-radius:10px;padding:12px 14px;cursor:pointer;">
+        <input type="radio" name="reportAgrupamentoInput" value="empresa" ${reportAgrupamento==='empresa'?'checked':''} style="margin-top:3px;">
+        <span><b style="font-size:13px;">Separado por empresa</b><br><span style="font-size:11.5px;color:var(--ink-soft);">Pra mandar pra cada empresa conferir as horas ou fazer a fatura — uma página por empresa.</span></span>
+      </label>
+      <label style="display:flex;gap:10px;align-items:flex-start;background:${reportAgrupamento==='trabalhador'?'#DEEDE9':'var(--paper-2)'};border:1.5px solid ${reportAgrupamento==='trabalhador'?'var(--teal)':'var(--line)'};border-radius:10px;padding:12px 14px;cursor:pointer;">
+        <input type="radio" name="reportAgrupamentoInput" value="trabalhador" ${reportAgrupamento==='trabalhador'?'checked':''} style="margin-top:3px;">
+        <span><b style="font-size:13px;">Junto por trabalhador</b><br><span style="font-size:11.5px;color:var(--ink-soft);">Pra mandar pro contador fazer a folha de pagamento — cada pessoa aparece uma vez só, com todas as horas somadas, mesmo quem trabalhou em mais de uma empresa no período.</span></span>
+      </label>
+    </div>
+
+    <div class="section-title">2 · Período</div>
     <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;">
       <div><label style="font-size:12px;color:var(--ink-soft);display:block;margin-bottom:4px;">De</label><input type="date" id="reportStartInput" value="${reportStart}" style="padding:8px 10px;border:1px solid var(--line);border-radius:8px;font-family:'JetBrains Mono';"></div>
       <div><label style="font-size:12px;color:var(--ink-soft);display:block;margin-bottom:4px;">Até</label><input type="date" id="reportEndInput" value="${reportEnd}" style="padding:8px 10px;border:1px solid var(--line);border-radius:8px;font-family:'JetBrains Mono';"></div>
@@ -3464,7 +3479,7 @@ function renderHoras(main){
       </select></div>
     </div>
 
-    <div class="section-title">2 · Quem incluir</div>
+    <div class="section-title">3 · Quem incluir</div>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px;margin-bottom:20px;">
       <div>
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
@@ -3499,7 +3514,7 @@ function renderHoras(main){
       </div>
     </div>
 
-    <div class="section-title">3 · O que mostrar no relatório</div>
+    <div class="section-title">4 · O que mostrar no relatório</div>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px 16px;margin-bottom:8px;font-size:13px;">
       <label style="display:flex;align-items:center;gap:7px;background:var(--paper-2);padding:7px 10px;border-radius:8px;cursor:pointer;"><input type="checkbox" id="chkHoras" ${reportShowHoras?'checked':''}> Horas totais</label>
       <label style="display:flex;align-items:center;gap:7px;background:var(--paper-2);padding:7px 10px;border-radius:8px;cursor:pointer;"><input type="checkbox" id="chkValor" ${reportShowValor?'checked':''}> Valor a pagar</label>
@@ -3579,6 +3594,8 @@ function gerarRelatorio(){
   reportShowIban = document.getElementById('chkIban').checked;
   reportShowDesconto = document.getElementById('chkDesconto').checked;
   reportAutoDesconto = document.getElementById('chkAutoDesconto').checked;
+  const agrupamentoMarcado = document.querySelector('input[name="reportAgrupamentoInput"]:checked');
+  reportAgrupamento = agrupamentoMarcado ? agrupamentoMarcado.value : 'empresa';
   reportLang = document.getElementById('reportLangInput').value;
 
   const checkboxesEmpresa = Array.from(document.querySelectorAll('.report-empresa-chk'));
@@ -3709,20 +3726,59 @@ function aplicarFiltrosRelatorio(linhas){
   return out;
 }
 
+// Modo "junto por trabalhador": uma linha por pessoa, somando TODAS as empresas em que
+// trabalhou no período — pra mandar pro contador fazer a folha de pagamento sem confundir
+// quem passou de uma empresa pra outra no meio do caminho.
+function linhasRelatorioPorTrabalhador(start, end){
+  const linhas = [];
+  trabalhadoresDoClienteAtivo().forEach(t => {
+    const entriesPeriodo = horasNoPeriodo(t, start, end).slice().sort((a,b)=> a.data < b.data ? -1 : 1);
+    if (entriesPeriodo.length === 0) return;
+    const horas = entriesPeriodo.reduce((acc,h)=>acc+Number(h.quantidade||0),0);
+    const total = entriesPeriodo.reduce((acc,h)=> acc + Number(h.quantidade||0) * valorHoraEntrada(h, t), 0);
+    const valorHora = horas > 0 ? total / horas : Number(t.valorHora||0);
+    const empresasIds = [...new Set(entriesPeriodo.map(h => empresaIdEntrada(h, t) || ''))];
+    const empresaNomeStr = empresasIds.map(eid => (eid && empresaNome(eid)) || 'Sem empresa').join(' + ');
+    linhas.push({
+      trab: t, entries: entriesPeriodo, horas, valorHora, total,
+      empresaId: empresasIds.length === 1 ? (empresasIds[0] || null) : null,
+      empresaIds,
+      empresaNome: empresaNomeStr,
+    });
+  });
+  return linhas.filter(l => l.horas > 0);
+}
+
+function aplicarFiltrosRelatorioPorTrabalhador(linhas){
+  let out = linhas;
+  if (reportEmpresaFiltro !== 'todas'){
+    out = out.filter(l => l.empresaIds.some(eid => reportEmpresaFiltro.includes(eid)));
+  }
+  if (reportTrabalhadorFiltro !== 'todos'){
+    out = out.filter(l => reportTrabalhadorFiltro.includes(l.trab.id));
+  }
+  return out;
+}
+
 function renderRelatorio(main){
   defaultReportPeriod();
   const start = reportStart, end = reportEnd;
   const T = REPORT_I18N[reportLang] || REPORT_I18N.pt;
   const clienteAtivoNome = (state.clientes.find(c=>c.id===clienteAtivoId)||{}).nome || '';
 
-  let linhas = aplicarFiltrosRelatorio(linhasRelatorio(start, end));
+  const modoPorTrabalhador = reportAgrupamento === 'trabalhador';
+  let linhas = modoPorTrabalhador
+    ? aplicarFiltrosRelatorioPorTrabalhador(linhasRelatorioPorTrabalhador(start, end))
+    : aplicarFiltrosRelatorio(linhasRelatorio(start, end));
 
   // Classifica automaticamente o desconto de cada trabalhador pro período deste relatório:
   // mais de 200h no total (somando todas as empresas em que trabalhou nesse período) = 220,
   // 200h ou menos = normal. Continua editável manualmente na tabela pra casos de exceção.
   if (reportShowDesconto && reportAutoDesconto){
     const totalHorasPorTrab = {};
-    linhas.forEach(l => { totalHorasPorTrab[l.trab.id] = (totalHorasPorTrab[l.trab.id] || 0) + l.horas; });
+    (modoPorTrabalhador ? linhas : aplicarFiltrosRelatorio(linhasRelatorio(start, end))).forEach(l => {
+      totalHorasPorTrab[l.trab.id] = (totalHorasPorTrab[l.trab.id] || 0) + l.horas;
+    });
     let mudouDesconto = false;
     Object.keys(totalHorasPorTrab).forEach(trabId => {
       const t = state.trabalhadores.find(x => x.id === trabId);
@@ -3733,19 +3789,23 @@ function renderRelatorio(main){
     if (mudouDesconto) persist('trabalhadores');
   }
 
-  // agrupa por empresa
+  // agrupa por empresa (só no modo separado por empresa — no modo por trabalhador, tudo é um grupo único)
   const grupos = {};
-  linhas.forEach(l => {
-    if (!grupos[l.empresaNome]) grupos[l.empresaNome] = [];
-    grupos[l.empresaNome].push(l);
-  });
-  const nomesEmpresas = Object.keys(grupos).sort();
+  if (modoPorTrabalhador){
+    grupos['__todos__'] = linhas;
+  } else {
+    linhas.forEach(l => {
+      if (!grupos[l.empresaNome]) grupos[l.empresaNome] = [];
+      grupos[l.empresaNome].push(l);
+    });
+  }
+  const nomesEmpresas = modoPorTrabalhador ? ['__todos__'] : Object.keys(grupos).sort();
 
   const grandTotalHoras = linhas.reduce((a,l)=>a+l.horas,0);
   const grandTotalValor = linhas.reduce((a,l)=>a+l.total,0);
 
   let html = `<div class="topbar no-print">
-    <div><h1>${T.tituloHoras}${reportShowValor?T.tituloValores:''}</h1><div class="subtitle">${T.periodo}: ${formatDate(start)} até ${formatDate(end)} · separado por empresa</div></div>
+    <div><h1>${T.tituloHoras}${reportShowValor?T.tituloValores:''}</h1><div class="subtitle">${T.periodo}: ${formatDate(start)} até ${formatDate(end)} · ${modoPorTrabalhador ? 'tudo junto por trabalhador (folha de pagamento)' : 'separado por empresa'}</div></div>
     <div style="display:flex;gap:8px;">
       <button class="btn ghost" onclick="view='horas'; render();">← Voltar</button>
       <button class="btn ghost" onclick="exportarCSV(${JSON.stringify(start)}, ${JSON.stringify(end)})">⬇️ Exportar CSV</button>
@@ -3772,9 +3832,10 @@ function renderRelatorio(main){
       <h1 style="font-family:'Fraunces',serif;">${clienteAtivoNome} — ${T.tituloHoras}${reportShowValor?T.tituloValores:''}</h1>
       <p>${T.periodo}: ${formatDate(start)} até ${formatDate(end)}</p>
     </div>`;
-    html += `<h2 style="font-family:'Fraunces',serif;font-size:17px;margin:22px 0 10px;">${nomeEmpresa}</h2>`;
+    html += `<h2 style="font-family:'Fraunces',serif;font-size:17px;margin:22px 0 10px;">${modoPorTrabalhador ? 'Folha de pagamento — todos os trabalhadores' : nomeEmpresa}</h2>`;
     html += `<table style="margin-bottom:10px;"><thead><tr>
       <th>${T.trabalhador}</th>
+      ${modoPorTrabalhador ? `<th>Empresa(s)</th>` : ''}
       ${reportShowHoras ? `<th>${T.horasPeriodo}</th>` : ''}
       ${reportShowValor ? `<th>${T.valorHora}</th><th>${T.totalPagar}</th>` : ''}
       ${reportShowIban ? `<th>IBAN</th>` : ''}
@@ -3788,6 +3849,7 @@ function renderRelatorio(main){
       html += `<tbody class="trab-group">
       <tr>
         <td><b>${l.trab.nome}</b></td>
+        ${modoPorTrabalhador ? `<td style="font-size:12px;">${l.empresaNome}</td>` : ''}
         ${reportShowHoras ? `<td>${l.horas.toLocaleString('pt-PT')}h</td>` : ''}
         ${reportShowValor ? `<td>€${l.valorHora.toLocaleString('pt-PT',{minimumFractionDigits:2, maximumFractionDigits:2})}</td><td><b>€${l.total.toLocaleString('pt-PT',{minimumFractionDigits:2, maximumFractionDigits:2})}</b></td>` : ''}
         ${reportShowIban ? `<td class="iban-col" style="font-family:'JetBrains Mono';font-size:11.5px;">${l.trab.iban || '—'}</td>` : ''}
@@ -3805,15 +3867,19 @@ function renderRelatorio(main){
         </td>
       </tr>`;
       if (reportShowDias){
-        const diasHtml = l.entries.map(e => `${formatDate(e.data)}: <b>${e.quantidade}h</b>`).join(' · ');
-        const colspan = 1 + (reportShowHoras?1:0) + (reportShowValor?2:0) + (reportShowIban?1:0) + (reportShowDesconto?1:0) + 1;
+        const diasHtml = l.entries.map(e => {
+          const tagEmpresa = modoPorTrabalhador ? ` (${(empresaNome(empresaIdEntrada(e,l.trab))||'?')})` : '';
+          return `${formatDate(e.data)}${tagEmpresa}: <b>${e.quantidade}h</b>`;
+        }).join(' · ');
+        const colspan = 1 + (modoPorTrabalhador?1:0) + (reportShowHoras?1:0) + (reportShowValor?2:0) + (reportShowIban?1:0) + (reportShowDesconto?1:0) + 1;
         html += `<tr><td colspan="${colspan}" style="background:var(--paper-2);font-size:12px;color:var(--ink-soft);padding:6px 16px;white-space:normal;overflow-wrap:anywhere;word-break:break-word;max-width:0;">${diasHtml || T.semDias}</td></tr>`;
       }
       html += `</tbody>`;
     });
 
     html += `<tbody><tr style="font-weight:700;background:var(--paper-2);">
-      <td>${T.subtotal} ${nomeEmpresa}</td>
+      <td>${modoPorTrabalhador ? T.totalGeralUma : T.subtotal + ' ' + nomeEmpresa}</td>
+      ${modoPorTrabalhador ? `<td></td>` : ''}
       ${reportShowHoras ? `<td>${subtotalHoras.toLocaleString('pt-PT')}h</td>` : ''}
       ${reportShowValor ? `<td></td><td>€${subtotalValor.toLocaleString('pt-PT',{minimumFractionDigits:2, maximumFractionDigits:2})}</td>` : ''}
       ${reportShowIban ? `<td></td>` : ''}
@@ -3826,7 +3892,7 @@ function renderRelatorio(main){
 
   window._reportPagamentoRows = pagamentoRows;
 
-  if (nomesEmpresas.length > 1){
+  if (!modoPorTrabalhador && nomesEmpresas.length > 1){
     html += `<table style="margin-top:20px;"><tbody><tr style="font-weight:700;background:var(--teal-dark);color:#fff;">
       <td>${T.totalGeral}</td>
       ${reportShowHoras ? `<td>${grandTotalHoras.toLocaleString('pt-PT')}h</td>` : ''}
@@ -3838,7 +3904,10 @@ function renderRelatorio(main){
 }
 
 function exportarCSV(start, end){
-  let linhas = aplicarFiltrosRelatorio(linhasRelatorio(start, end));
+  const modoPorTrabalhador = reportAgrupamento === 'trabalhador';
+  let linhas = modoPorTrabalhador
+    ? aplicarFiltrosRelatorioPorTrabalhador(linhasRelatorioPorTrabalhador(start, end))
+    : aplicarFiltrosRelatorio(linhasRelatorio(start, end));
 
   const grupos = {};
   linhas.forEach(l => { if (!grupos[l.empresaNome]) grupos[l.empresaNome]=[]; grupos[l.empresaNome].push(l); });
