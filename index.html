@@ -3742,7 +3742,7 @@ function linhasRelatorioPorTrabalhador(start, end){
     linhas.push({
       trab: t, entries: entriesPeriodo, horas, valorHora, total,
       empresaId: empresasIds.length === 1 ? (empresasIds[0] || null) : null,
-      empresaIds,
+      empresaIds: empresasIds,
       empresaNome: empresaNomeStr,
     });
   });
