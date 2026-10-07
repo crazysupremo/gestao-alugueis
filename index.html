@@ -3280,6 +3280,7 @@ let reportShowValor = true;
 let reportShowDias = false;
 let reportShowIban = true;
 let reportShowDesconto = true;
+let reportAutoDesconto = true;
 let reportEmpresaFiltro = 'todas';
 let reportTrabalhadorFiltro = 'todos';
 let reportLang = 'pt';
@@ -3491,7 +3492,8 @@ function renderHoras(main){
       <label style="display:flex;align-items:center;gap:6px;"><input type="checkbox" id="chkValor" ${reportShowValor?'checked':''}> Mostrar valor a pagar</label>
       <label style="display:flex;align-items:center;gap:6px;"><input type="checkbox" id="chkDias" ${reportShowDias?'checked':''}> Mostrar dias trabalhados (detalhado)</label>
       <label style="display:flex;align-items:center;gap:6px;"><input type="checkbox" id="chkIban" ${reportShowIban?'checked':''}> Mostrar IBAN</label>
-      <label style="display:flex;align-items:center;gap:6px;"><input type="checkbox" id="chkDesconto" ${reportShowDesconto?'checked':''}> Mostrar desconto (normal/220 — calculado sozinho, acima de 200h = 220)</label>
+      <label style="display:flex;align-items:center;gap:6px;"><input type="checkbox" id="chkDesconto" ${reportShowDesconto?'checked':''}> Mostrar desconto (normal/220)</label>
+      <label style="display:flex;align-items:center;gap:6px;"><input type="checkbox" id="chkAutoDesconto" ${reportAutoDesconto?'checked':''}> Calcular desconto sozinho (acima de 200h = 220) — desmarque pra decidir manualmente</label>
     </div>
     <button class="btn" onclick="gerarRelatorio()">📊 Gerar relatório</button>
   </div>`;
@@ -3558,6 +3560,7 @@ function gerarRelatorio(){
   reportShowDias = document.getElementById('chkDias').checked;
   reportShowIban = document.getElementById('chkIban').checked;
   reportShowDesconto = document.getElementById('chkDesconto').checked;
+  reportAutoDesconto = document.getElementById('chkAutoDesconto').checked;
   reportLang = document.getElementById('reportLangInput').value;
 
   const checkboxesEmpresa = Array.from(document.querySelectorAll('.report-empresa-chk'));
@@ -3699,7 +3702,7 @@ function renderRelatorio(main){
   // Classifica automaticamente o desconto de cada trabalhador pro período deste relatório:
   // mais de 200h no total (somando todas as empresas em que trabalhou nesse período) = 220,
   // 200h ou menos = normal. Continua editável manualmente na tabela pra casos de exceção.
-  if (reportShowDesconto){
+  if (reportShowDesconto && reportAutoDesconto){
     const totalHorasPorTrab = {};
     linhas.forEach(l => { totalHorasPorTrab[l.trab.id] = (totalHorasPorTrab[l.trab.id] || 0) + l.horas; });
     let mudouDesconto = false;
