@@ -4729,15 +4729,16 @@ function renderContratos(main){
     <div><h1>Entrevistas & Contratos</h1><div class="subtitle">Fase 1 (triagem) e Fase 2 (contrato assinado)</div></div>
   </div>`;
 
-  const savedLink = state.linkEntrevista || '';
+  // O link do candidato é SEMPRE este mesmo site, só que com ?entrevista=1 na URL —
+  // não precisa hospedar nenhum arquivo separado.
+  const linkCandidato = `${window.location.origin}${window.location.pathname}?entrevista=1`;
   html += `<div class="rh-card" style="margin-bottom:24px;">
-    <div class="rh-name" style="margin-bottom:6px;">Link para o candidato (página separada "entrevista-dfneto.html")</div>
-    <div class="rh-meta" style="margin-bottom:10px;">Depois de hospedar o arquivo <b>entrevista-dfneto.html</b> (ex: no Netlify), cole aqui o link público para guardar e compartilhar facilmente.</div>
-    <div style="display:flex;gap:8px;">
-      <input id="f_linkEntrevista" value="${savedLink}" placeholder="https://seusite.netlify.app/entrevista-dfneto.html" style="flex:1;padding:9px 12px;border:1px solid var(--line);border-radius:8px;font-size:13px;font-family:'JetBrains Mono';background:var(--paper-2);">
-      <button class="btn" onclick="saveLinkEntrevista()">Salvar</button>
+    <div class="rh-name" style="margin-bottom:6px;">Link para o candidato</div>
+    <div class="rh-meta" style="margin-bottom:10px;">Mande este link para quem vai se candidatar. Ele abre a triagem e, se aprovado, a assinatura do contrato — direto neste mesmo site.</div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+      <div class="pill" id="pillLinkCandidato" style="user-select:all;padding:8px 12px;font-family:'JetBrains Mono';font-size:12.5px;word-break:break-all;">${linkCandidato}</div>
+      <button class="btn ghost" onclick="copiarLinkCandidato('${linkCandidato}')">📋 Copiar link</button>
     </div>
-    ${savedLink ? `<div class="pill" style="user-select:all;padding:8px 12px;margin-top:10px;">${savedLink}</div>` : ''}
   </div>`;
 
   const candidaturas = state.candidaturas || [];
@@ -4811,12 +4812,15 @@ function limparReprovados(){
   render();
 }
 
-function saveLinkEntrevista(){
-  const val = document.getElementById('f_linkEntrevista').value.trim();
-  state.linkEntrevista = val;
-  persist('linkEntrevista');
-  showToast('✓ Link salvo', false, 1400);
-  render();
+function copiarLinkCandidato(link){
+  navigator.clipboard.writeText(link).then(()=>{
+    showToast('✓ Link copiado', false, 1400);
+  }).catch(()=>{
+    // fallback pra navegadores/contextos sem permissão de clipboard
+    const el = document.getElementById('pillLinkCandidato');
+    if (el){ const range = document.createRange(); range.selectNode(el); window.getSelection().removeAllRanges(); window.getSelection().addRange(range); }
+    showToast('Selecionei o link pra você — copie com Cmd/Ctrl+C', false, 2200);
+  });
 }
 
 function deleteContrato(id){
