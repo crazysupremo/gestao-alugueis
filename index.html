@@ -722,7 +722,10 @@ function dataLocalISO(date){
 const GEMINI_API_KEY = "AQ.Ab8RN6Is4bZc9freH1gBWjEbeft9mB6lGxuyqwh3qt6BsIDd_Q";
 const GROQ_API_KEY = "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";
 const GROQ_MODEL = "openai/gpt-oss-120b"; // llama-3.3-70b-versatile foi desativado pela Groq (16/08/2026)
-const GEMINI_MODELS = ["gemini-flash-latest", "gemini-3.6-flash"];
+// "gemini-flash-latest" não é um nome de modelo garantido pela Google — trocado pelos nomes
+// reais e atuais (out/2026): 3.8-flash é o modelo estável mais novo, 3.6-flash fica como
+// reserva (ainda funciona, só sai de linha em 19/11/2026).
+const GEMINI_MODELS = ["gemini-3.8-flash", "gemini-3.6-flash"];
 
 async function tentarChamadaGemini(model, authMode, body){
   const base = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
@@ -2042,6 +2045,22 @@ async function loadAll(){
       }
     });
     if (precisaSalvarImoveis) await persist('imoveis');
+
+    // Mesma migração para trabalhadores "órfãos" (sem empresa vinculada e sem clienteId
+    // gravado) — eles estavam salvos no banco mas somem de toda lista/relatório.
+    const clienteDoTrab = {};
+    let precisaSalvarTrabalhadores = false;
+    state.trabalhadores.forEach(t => {
+      const resolvido = t.clienteId || clienteDaEmpresa[t.empresaId];
+      if (!resolvido || !idsClientesValidos.has(resolvido)){
+        t.clienteId = state.clientes[0].id;
+        precisaSalvarTrabalhadores = true;
+      } else if (!t.clienteId){
+        t.clienteId = resolvido;
+        precisaSalvarTrabalhadores = true;
+      }
+    });
+    if (precisaSalvarTrabalhadores) await persist('trabalhadores');
   }
 
   clienteAtivoId = state.clientes[0].id;
@@ -2338,7 +2357,11 @@ function empresasDoClienteAtivo(){
 
 function trabalhadoresDoClienteAtivo(){
   const idsEmpresas = new Set(empresasDoClienteAtivo().map(e=>e.id));
-  return state.trabalhadores.filter(t => t.empresaId && idsEmpresas.has(t.empresaId));
+  // Mesma correção aplicada aos imóveis: um trabalhador salvo SEM empresa vinculada (campo
+  // "Empresa" em branco no cadastro) tinha empresaId=null e desaparecia de todo lugar — lista,
+  // dashboard e relatórios — mesmo estando salvo no banco. Agora também entra quem tem o
+  // clienteId direto gravado (ver migração em loadAll()).
+  return state.trabalhadores.filter(t => (t.empresaId && idsEmpresas.has(t.empresaId)) || t.clienteId === clienteAtivoId);
 }
 
 function vagasDoClienteAtivo(){
@@ -2555,14 +2578,17 @@ function renderImoveis(main){
   if (imoveisCliente.length === 0){
     html += `<div class="empty">Ainda não há imóveis para ${clienteAtivo ? clienteAtivo.nome : 'este cliente'}.</div>`;
   } else {
-    html += `<table><thead><tr>
+    html += `<div style="margin-bottom:12px;"><input type="text" id="buscaImoveisInput" oninput="filtrarImoveisTabela()" placeholder="🔍 Buscar por nome, cidade, endereço, empresa, IBAN ou morador…" autocomplete="off" style="width:100%;max-width:420px;padding:9px 12px;border:1px solid var(--line);border-radius:8px;font-size:13.5px;background:var(--paper-2);color:var(--ink);"></div>`;
+    html += `<div id="buscaImoveisVazio" class="empty" style="display:none;">Nenhum imóvel encontrado para essa busca.</div>`;
+    html += `<table id="tabelaImoveis"><thead><tr>
       <th>Nome</th><th>Cidade</th><th>Endereço</th><th>Empresa</th><th>Aluguel</th><th>Vencimento</th><th>IBAN</th><th>Status</th><th>Trabalhadores</th><th></th>
     </tr></thead><tbody>`;
     imoveisCliente.forEach(im => {
       const c = cityMeta(im.cidade);
       const venc = diasParaVencimento(im.diaVencimento);
       const moradores = state.trabalhadores.filter(t => t.imovelId === im.id);
-      html += `<tr id="row-${im.id}">
+      const busca = [im.nome, c.label, im.endereco, empresaNome(im.empresaId), im.ibanAluguel, moradores.map(m=>m.nome).join(' ')].filter(Boolean).join(' ').toLowerCase();
+      html += `<tr id="row-${im.id}" data-busca="${busca.replace(/"/g,'&quot;')}">
         <td><b>${im.nome}</b></td>
         <td><span class="pill">${c.label}</span></td>
         <td>${im.endereco || '—'}</td>
@@ -2582,6 +2608,21 @@ function renderImoveis(main){
     html += `</tbody></table>`;
   }
   main.innerHTML = html;
+}
+
+function filtrarImoveisTabela(){
+  const q = (document.getElementById('buscaImoveisInput').value||'').trim().toLowerCase();
+  const linhas = Array.from(document.querySelectorAll('#tabelaImoveis tbody tr'));
+  let visiveis = 0;
+  linhas.forEach(tr => {
+    const bate = !q || (tr.dataset.busca||'').includes(q);
+    tr.style.display = bate ? '' : 'none';
+    if (bate) visiveis++;
+  });
+  const tabela = document.getElementById('tabelaImoveis');
+  const vazio = document.getElementById('buscaImoveisVazio');
+  if (tabela) tabela.style.display = visiveis === 0 ? 'none' : '';
+  if (vazio) vazio.style.display = visiveis === 0 ? '' : 'none';
 }
 
 function gerarRelatorioAlugueis(){
@@ -2811,10 +2852,13 @@ function renderEmpresas(main){
   if (empresasCliente.length === 0){
     html += `<div class="empty">Ainda não há empresas para ${clienteAtivo ? clienteAtivo.nome : 'este cliente'}.</div>`;
   } else {
-    html += `<table><thead><tr><th>Nome</th><th>CIF/NIF</th><th>Imóvel</th><th>Contato</th><th></th></tr></thead><tbody>`;
+    html += `<div style="margin-bottom:12px;"><input type="text" id="buscaEmpresasInput" oninput="filtrarEmpresasTabela()" placeholder="🔍 Buscar por nome, CIF/NIF, imóvel ou contato…" autocomplete="off" style="width:100%;max-width:420px;padding:9px 12px;border:1px solid var(--line);border-radius:8px;font-size:13.5px;background:var(--paper-2);color:var(--ink);"></div>`;
+    html += `<div id="buscaEmpresasVazio" class="empty" style="display:none;">Nenhuma empresa encontrada para essa busca.</div>`;
+    html += `<table id="tabelaEmpresas"><thead><tr><th>Nome</th><th>CIF/NIF</th><th>Imóvel</th><th>Contato</th><th></th></tr></thead><tbody>`;
     empresasCliente.forEach(e => {
       const imoveisVinculados = state.imoveis.filter(i=>i.empresaId===e.id).map(i=>i.nome).join(', ');
-      html += `<tr id="row-${e.id}">
+      const busca = [e.nome, e.nif, imoveisVinculados, e.contato].filter(Boolean).join(' ').toLowerCase();
+      html += `<tr id="row-${e.id}" data-busca="${busca.replace(/"/g,'&quot;')}">
         <td><b>${e.nome}</b></td>
         <td>${e.nif || '—'}</td>
         <td>${imoveisVinculados || '—'}</td>
@@ -2829,6 +2873,21 @@ function renderEmpresas(main){
     html += `</tbody></table>`;
   }
   main.innerHTML = html;
+}
+
+function filtrarEmpresasTabela(){
+  const q = (document.getElementById('buscaEmpresasInput').value||'').trim().toLowerCase();
+  const linhas = Array.from(document.querySelectorAll('#tabelaEmpresas tbody tr'));
+  let visiveis = 0;
+  linhas.forEach(tr => {
+    const bate = !q || (tr.dataset.busca||'').includes(q);
+    tr.style.display = bate ? '' : 'none';
+    if (bate) visiveis++;
+  });
+  const tabela = document.getElementById('tabelaEmpresas');
+  const vazio = document.getElementById('buscaEmpresasVazio');
+  if (tabela) tabela.style.display = visiveis === 0 ? 'none' : '';
+  if (vazio) vazio.style.display = visiveis === 0 ? '' : 'none';
 }
 
 function openBulkEmpresas(){
@@ -2954,9 +3013,12 @@ function renderTrabalhadores(main){
   if (trabsCliente.length === 0){
     html += `<div class="empty">Ainda não há trabalhadores para ${clienteAtivo ? clienteAtivo.nome : 'este cliente'}.</div>`;
   } else {
-    html += `<table><thead><tr><th>Nome</th><th>Cargo</th><th>Imóvel</th><th>Empresa</th><th>Contato</th><th>IBAN</th><th>Documentos</th><th></th></tr></thead><tbody>`;
+    html += `<div style="margin-bottom:12px;"><input type="text" id="buscaTrabalhadoresInput" oninput="filtrarTrabalhadoresTabela()" placeholder="🔍 Buscar por nome, cargo, imóvel, empresa, contato ou IBAN…" autocomplete="off" style="width:100%;max-width:420px;padding:9px 12px;border:1px solid var(--line);border-radius:8px;font-size:13.5px;background:var(--paper-2);color:var(--ink);"></div>`;
+    html += `<div id="buscaTrabalhadoresVazio" class="empty" style="display:none;">Nenhum trabalhador encontrado para essa busca.</div>`;
+    html += `<table id="tabelaTrabalhadores"><thead><tr><th>Nome</th><th>Cargo</th><th>Imóvel</th><th>Empresa</th><th>Contato</th><th>IBAN</th><th>Documentos</th><th></th></tr></thead><tbody>`;
     trabsCliente.forEach(t => {
-      html += `<tr id="row-${t.id}">
+      const busca = [t.nome, t.cargo, imovelNome(t.imovelId), empresaNome(t.empresaId), t.contato, t.iban].filter(Boolean).join(' ').toLowerCase();
+      html += `<tr id="row-${t.id}" data-busca="${busca.replace(/"/g,'&quot;')}">
         <td><b>${t.nome}</b> ${t.origemContratoId ? `<span class="pill" title="Cadastrado automaticamente ao assinar o contrato" style="font-size:10px;margin-left:4px;">📄 auto</span>` : ''}</td>
         <td>${t.cargo || '—'}</td>
         <td>${imovelNome(t.imovelId)}</td>
@@ -2974,6 +3036,21 @@ function renderTrabalhadores(main){
     html += `</tbody></table>`;
   }
   main.innerHTML = html;
+}
+
+function filtrarTrabalhadoresTabela(){
+  const q = (document.getElementById('buscaTrabalhadoresInput').value||'').trim().toLowerCase();
+  const linhas = Array.from(document.querySelectorAll('#tabelaTrabalhadores tbody tr'));
+  let visiveis = 0;
+  linhas.forEach(tr => {
+    const bate = !q || (tr.dataset.busca||'').includes(q);
+    tr.style.display = bate ? '' : 'none';
+    if (bate) visiveis++;
+  });
+  const tabela = document.getElementById('tabelaTrabalhadores');
+  const vazio = document.getElementById('buscaTrabalhadoresVazio');
+  if (tabela) tabela.style.display = visiveis === 0 ? 'none' : '';
+  if (vazio) vazio.style.display = visiveis === 0 ? '' : 'none';
 }
 
 function openTrocaEmpresaForm(id){
@@ -3265,6 +3342,7 @@ function saveTrabalhador(id){
     cargo: document.getElementById('f_cargo').value.trim(),
     imovelId: document.getElementById('f_imovel').value || null,
     empresaId: document.getElementById('f_empresa').value || null,
+    clienteId: clienteAtivoId,
     contato: document.getElementById('f_contato').value.trim(),
     valorHora: document.getElementById('f_valorhora').value || 0,
     valorCobrado: document.getElementById('f_valorcobrado').value || 0,
