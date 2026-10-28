@@ -4133,6 +4133,16 @@ function openHoraForm(trabId, month, empresaId){
       <input type="number" step="0.01" id="calValorHoraInput" value="${valorHoraAtual}" style="padding:6px 8px;border:1px solid var(--line);border-radius:6px;width:100px;font-family:'JetBrains Mono';"></div>
     </div>
     <div style="font-size:11.5px;color:var(--ink-soft);margin:8px 0 14px;">Se essa pessoa trabalhou em mais de uma empresa nesse mês, registre os dias de uma empresa, salve, depois troque a empresa aqui em cima e registre os dias da outra — cada lançamento guarda a empresa e o valor/hora certos.</div>
+    <div style="background:var(--paper-2);border:1px dashed var(--line);border-radius:10px;padding:10px 12px;margin-bottom:14px;">
+      <div style="font-size:11.5px;color:var(--ink-soft);font-weight:600;margin-bottom:6px;">⚡ Preenchimento rápido — mesma quantidade de horas se repete em vários dias? Preenche um intervalo de uma vez.</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;">
+        <div><label style="font-size:11px;color:var(--ink-soft);display:block;">Horas/dia</label><input type="number" step="0.5" min="0" max="24" id="loteHoras" style="width:70px;padding:6px 8px;border:1px solid var(--line);border-radius:6px;" placeholder="9"></div>
+        <div><label style="font-size:11px;color:var(--ink-soft);display:block;">Do dia</label><input type="number" min="1" max="31" id="loteDe" style="width:60px;padding:6px 8px;border:1px solid var(--line);border-radius:6px;" placeholder="13"></div>
+        <div><label style="font-size:11px;color:var(--ink-soft);display:block;">Até o dia</label><input type="number" min="1" max="31" id="loteAte" style="width:60px;padding:6px 8px;border:1px solid var(--line);border-radius:6px;" placeholder="16"></div>
+        <label style="display:flex;align-items:center;gap:5px;font-size:11.5px;cursor:pointer;padding-bottom:7px;"><input type="checkbox" id="loteSoUteis" checked> só seg-sex</label>
+        <button type="button" class="btn ghost" style="padding:7px 12px;font-size:12.5px;" onclick="aplicarHorasEmLote()">Aplicar no calendário</button>
+      </div>
+    </div>
     <div class="hours-cal-weekdays"><span>Dom</span><span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span><span>Sex</span><span>Sáb</span></div>
     <div class="hours-cal-grid" id="calGrid">${gridHtml}</div>
     <div class="hours-cal-total" id="calTotal"></div>
@@ -4143,6 +4153,33 @@ function openHoraForm(trabId, month, empresaId){
     </div>`;
   showModal();
   updateCalTotal();
+}
+
+// Preenche de uma vez um intervalo de dias com a mesma quantidade de horas — feito pra
+// bater com o jeito que as folhas de ponto em papel normalmente vêm (mesmo horário repetido
+// vários dias seguidos), evitando digitar o mesmo número dia por dia.
+function aplicarHorasEmLote(){
+  const horas = Number(document.getElementById('loteHoras').value);
+  const de = Number(document.getElementById('loteDe').value);
+  const ate = Number(document.getElementById('loteAte').value);
+  const soUteis = document.getElementById('loteSoUteis').checked;
+  if (!horas || horas <= 0){ alert('Preenche quantas horas por dia.'); return; }
+  if (!de || !ate || de > ate){ alert('Preenche um intervalo de dias válido (ex: do dia 13 até o dia 16).'); return; }
+
+  let aplicados = 0;
+  for (let d = de; d <= ate; d++){
+    const cell = document.getElementById('calday-' + d);
+    if (!cell) continue; // dia não existe nesse mês (ex: dia 31 em mês de 30)
+    const input = cell.querySelector('input');
+    if (!input) continue;
+    const dataStr = input.dataset.date;
+    const diaSemana = new Date(dataStr + 'T00:00:00').getDay(); // 0=dom, 6=sáb
+    if (soUteis && (diaSemana === 0 || diaSemana === 6)) continue;
+    input.value = horas;
+    updateCalDayStyle(input);
+    aplicados++;
+  }
+  showToast(`✓ ${aplicados} dia(s) preenchido(s) com ${horas}h — confira e clique em Salvar`, false, 2500);
 }
 
 function updateCalDayStyle(input){
