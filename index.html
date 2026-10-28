@@ -51,6 +51,7 @@
   .nav button:hover{background:rgba(255,255,255,0.08);transform:translateX(2px);}
   .nav button.active{background:#EDEAE1;color:var(--teal-dark);font-weight:700;box-shadow:0 2px 8px rgba(0,0,0,0.15);}
   .nav .tag{font-family:'JetBrains Mono';font-size:11px;opacity:.6;}
+  .nav-section{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8FB3AD;margin:14px 0 2px 12px;}
 
   /* Abas de cliente */
   .cliente-tabs{display:flex;flex-wrap:wrap;gap:6px;margin-top:18px;padding-bottom:16px;border-bottom:1px solid rgba(255,255,255,0.12);align-items:center;}
@@ -172,8 +173,10 @@
   /* Modal */
   .overlay{position:fixed;inset:0;background:rgba(35,38,31,0.45);display:none;align-items:center;justify-content:center;z-index:50;}
   .overlay.show{display:flex;}
-  .modal{background:var(--card);border-radius:16px;padding:26px 28px;width:420px;max-width:92vw;box-shadow:0 24px 70px rgba(10,20,30,0.3);}
-  .modal h3{font-family:'Fraunces',serif;margin:0 0 18px;font-size:19px;}
+  .modal{background:var(--card);border-radius:16px;padding:26px 28px;width:420px;max-width:92vw;max-height:88vh;overflow-y:auto;box-shadow:0 24px 70px rgba(10,20,30,0.3);}
+  .modal h3{font-family:'Fraunces',serif;margin:0 0 18px;font-size:19px;overflow-wrap:anywhere;}
+  /* Modal mais largo, usado só pro calendário de horas — 7 colunas não cabem nos 420px padrão */
+  .modal-cal{width:680px;}
   .field{margin-bottom:14px;}
   .field label{display:block;font-size:12px;font-weight:600;color:var(--ink-soft);margin-bottom:5px;}
   .field input, .field select{
@@ -218,6 +221,7 @@
     .cliente-tabs{margin-top:12px;}
     .nav{margin-top:14px;flex-direction:row;flex-wrap:wrap;gap:4px;}
     .nav button{padding:8px 10px;font-size:13px;}
+    .nav-section{display:none;}
     .sidebar-foot{margin-top:14px;}
     .main{padding:18px 14px;max-width:none;width:100%;box-sizing:border-box;}
     h1{font-size:22px;}
@@ -278,6 +282,18 @@
   .hours-cal-day.has-value{background:#DEEDE9;border-color:var(--teal);}
   .hours-cal-total{margin-top:14px;font-size:13px;color:var(--ink-soft);text-align:right;}
   .hours-cal-total b{color:var(--ink);font-family:'JetBrains Mono';}
+  .hours-cal-head{flex-wrap:wrap;gap:16px 20px;}
+  .hours-cal-head > div{min-width:150px;}
+  .hours-cal-head label{font-size:12px;color:var(--ink-soft);display:block;margin-bottom:5px;font-weight:600;}
+  .hours-cal-head input, .hours-cal-head select{padding:8px 10px;border:1px solid var(--line);border-radius:8px;font-family:'JetBrains Mono';width:100%;box-sizing:border-box;background:var(--paper-2);color:var(--ink);}
+  .hours-quickfill{background:var(--paper-2);border:1px dashed var(--line);border-radius:10px;padding:14px 16px;margin-bottom:16px;}
+  .hours-quickfill-title{font-size:12px;color:var(--ink-soft);font-weight:700;margin-bottom:10px;}
+  .hours-quickfill-row{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;}
+  .hours-quickfill-row > div{display:flex;flex-direction:column;gap:5px;}
+  .hours-quickfill-row label{font-size:11px;color:var(--ink-soft);font-weight:600;}
+  .hours-quickfill-row input[type=number]{padding:8px 10px;border:1px solid var(--line);border-radius:8px;font-family:'JetBrains Mono';width:72px;box-sizing:border-box;background:var(--card);color:var(--ink);}
+  .hours-quickfill-check{display:flex;align-items:center;gap:6px;font-size:12.5px;cursor:pointer;padding-bottom:9px;white-space:nowrap;}
+  .hours-quickfill-row .btn{padding-bottom:9px;height:38px;white-space:nowrap;}
 
   /* Brand badge */
   /* .brand layout merged above */
@@ -573,13 +589,16 @@
     <div class="nav">
       <button data-view="dashboard" class="active">📋 Visão geral</button>
       <button data-view="tarefas">✅ Tarefas & Lembretes</button>
+      <div class="nav-section">Gestão do dia a dia</div>
       <button data-view="trabalhadores">👤 Trabalhadores</button>
       <button data-view="horas">⏱️ Horas & RH</button>
       <button data-view="empresas">🏢 Empresas</button>
       <button data-view="imoveis">🏠 Imóveis</button>
+      <div class="nav-section">RH & contratação</div>
       <button data-view="vagas">💼 Vagas</button>
       <button data-view="trabalhos">📝 Trabalhos RH</button>
       <button data-view="contratos">📄 Entrevistas & Contratos</button>
+      <div class="nav-section">Relatórios</div>
       <button data-view="relatorioGeral">📊 Relatório Geral</button>
     </div>
     <div class="sidebar-foot">
@@ -2420,6 +2439,11 @@ function barChartHTML(porEmpresa, campo, cor){
   }).join('');
 }
 
+// Fica fechado por padrão — a tela inicial ficava comprida demais com todos os imóveis
+// detalhados card a card logo de cara; agora só mostra um resumo e abre sob demanda.
+let dashboardMostrarImoveis = false;
+function toggleDashboardImoveis(){ dashboardMostrarImoveis = !dashboardMostrarImoveis; render(); }
+
 function renderDashboard(main){
   const clienteAtivo = state.clientes.find(c=>c.id===clienteAtivoId);
   let html = `<div class="topbar">
@@ -2485,31 +2509,48 @@ function renderDashboard(main){
   const grouped = {};
   CITIES.forEach(c => grouped[c.id] = imoveisCliente.filter(i => i.cidade === c.id));
 
-  CITIES.forEach(c => {
-    const list = grouped[c.id];
-    if (list.length === 0) return;
-    html += `<div class="city-group">
-      <div class="city-head">
-        <div class="city-dot" style="background:${c.color}"></div>
-        <h2>${c.label}</h2>
-        <div class="city-count">${list.length} ${list.length>1?'imóveis':'imóvel'}</div>
+  // Resumo compacto por cidade, sempre visível — o detalhe card a card (que deixava a tela
+  // inicial comprida) agora fica escondido atrás de um botão "ver detalhes".
+  if (imoveisCliente.length > 0){
+    const resumoCidades = CITIES.filter(c => grouped[c.id].length > 0);
+    html += `<div class="rh-card" style="margin-bottom:22px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:${dashboardMostrarImoveis?'14px':'0'};">
+        <div class="rh-name" style="margin-bottom:0;">🏠 Imóveis por cidade</div>
+        <button class="btn ghost" style="padding:6px 12px;font-size:12.5px;" onclick="toggleDashboardImoveis()">${dashboardMostrarImoveis ? 'Ocultar detalhes ▲' : 'Ver detalhes ▼'}</button>
       </div>
-      <div class="cards">`;
-    list.forEach(im => {
-      const emp = empresaNome(im.empresaId);
-      const trabs = state.trabalhadores.filter(t => t.imovelId === im.id);
-      html += `<div class="card">
-        <div class="seal" style="background:${c.color}">${c.label[0]}</div>
-        <h3>${im.nome}</h3>
-        <div class="addr">${im.endereco || 'Sem endereço cadastrado'}</div>
-        <div class="kv"><span>Empresa</span><b>${emp || '—'}</b></div>
-        <div class="kv"><span>Trabalhadores</span><b>${trabs.length}</b></div>
-        <div class="kv"><span>Aluguel mensal</span><b>${im.valor ? '€'+Number(im.valor).toLocaleString('es-ES') : '—'}</b></div>
-        <span class="status ${im.status}">${im.status === 'ativo' ? 'Ativo' : 'Inativo'}</span>
-      </div>`;
+      <div style="display:flex;flex-wrap:wrap;gap:10px;">
+        ${resumoCidades.map(c => `<span class="pill" style="display:flex;align-items:center;gap:6px;padding:6px 12px;"><span style="width:8px;height:8px;border-radius:50%;background:${c.color};display:inline-block;"></span>${c.label} — <b>${grouped[c.id].length}</b></span>`).join('')}
+      </div>
+    </div>`;
+  }
+
+  if (dashboardMostrarImoveis){
+    CITIES.forEach(c => {
+      const list = grouped[c.id];
+      if (list.length === 0) return;
+      html += `<div class="city-group">
+        <div class="city-head">
+          <div class="city-dot" style="background:${c.color}"></div>
+          <h2>${c.label}</h2>
+          <div class="city-count">${list.length} ${list.length>1?'imóveis':'imóvel'}</div>
+        </div>
+        <div class="cards">`;
+      list.forEach(im => {
+        const emp = empresaNome(im.empresaId);
+        const trabs = state.trabalhadores.filter(t => t.imovelId === im.id);
+        html += `<div class="card">
+          <div class="seal" style="background:${c.color}">${c.label[0]}</div>
+          <h3>${im.nome}</h3>
+          <div class="addr">${im.endereco || 'Sem endereço cadastrado'}</div>
+          <div class="kv"><span>Empresa</span><b>${emp || '—'}</b></div>
+          <div class="kv"><span>Trabalhadores</span><b>${trabs.length}</b></div>
+          <div class="kv"><span>Aluguel mensal</span><b>${im.valor ? '€'+Number(im.valor).toLocaleString('es-ES') : '—'}</b></div>
+          <span class="status ${im.status}">${im.status === 'ativo' ? 'Ativo' : 'Inativo'}</span>
+        </div>`;
+      });
+      html += `</div></div>`;
     });
-    html += `</div></div>`;
-  });
+  }
 
   if (imoveisCliente.length === 0){
     html += `<div class="empty">Ainda não há imóveis cadastrados. Vá em "Imóveis" para adicionar o primeiro.</div>`;
@@ -4121,26 +4162,28 @@ function openHoraForm(trabId, month, empresaId){
       <button class="icon-btn" title="Próximo trabalhador dessa empresa" onclick="navegarHoraForm('${trabId}', document.getElementById('calMonthInput').value, document.getElementById('calEmpresaInput').value, 1)" style="font-size:18px;">▶</button>
     </div>` : '';
 
-  document.getElementById('modalBody').innerHTML = `
+  const modalEl = document.getElementById('modalBody');
+  modalEl.className = 'modal modal-cal';
+  modalEl.innerHTML = `
     ${navHtml}
     <h3>Registrar horas — ${t.nome}</h3>
-    <div class="hours-cal-head" style="flex-wrap:wrap;gap:10px;">
-      <div><label style="font-size:12px;color:var(--ink-soft);display:block;margin-bottom:4px;">Mês de referência</label>
-      <input type="month" id="calMonthInput" value="${month}" style="padding:6px 8px;border:1px solid var(--line);border-radius:6px;font-family:'JetBrains Mono';" onchange="openHoraForm('${trabId}', this.value, document.getElementById('calEmpresaInput').value)"></div>
-      <div><label style="font-size:12px;color:var(--ink-soft);display:block;margin-bottom:4px;">Empresa nesse mês</label>
-      <select id="calEmpresaInput" style="padding:6px 8px;border:1px solid var(--line);border-radius:6px;" onchange="openHoraForm('${trabId}', document.getElementById('calMonthInput').value, this.value)">${empresaOptions}</select></div>
-      <div><label style="font-size:12px;color:var(--ink-soft);display:block;margin-bottom:4px;">Valor/hora nessa empresa (€)</label>
-      <input type="number" step="0.01" id="calValorHoraInput" value="${valorHoraAtual}" style="padding:6px 8px;border:1px solid var(--line);border-radius:6px;width:100px;font-family:'JetBrains Mono';"></div>
+    <div class="hours-cal-head">
+      <div><label>Mês de referência</label>
+      <input type="month" id="calMonthInput" value="${month}" onchange="openHoraForm('${trabId}', this.value, document.getElementById('calEmpresaInput').value)"></div>
+      <div><label>Empresa nesse mês</label>
+      <select id="calEmpresaInput" onchange="openHoraForm('${trabId}', document.getElementById('calMonthInput').value, this.value)">${empresaOptions}</select></div>
+      <div><label>Valor/hora nessa empresa (€)</label>
+      <input type="number" step="0.01" id="calValorHoraInput" value="${valorHoraAtual}"></div>
     </div>
-    <div style="font-size:11.5px;color:var(--ink-soft);margin:8px 0 14px;">Se essa pessoa trabalhou em mais de uma empresa nesse mês, registre os dias de uma empresa, salve, depois troque a empresa aqui em cima e registre os dias da outra — cada lançamento guarda a empresa e o valor/hora certos.</div>
-    <div style="background:var(--paper-2);border:1px dashed var(--line);border-radius:10px;padding:10px 12px;margin-bottom:14px;">
-      <div style="font-size:11.5px;color:var(--ink-soft);font-weight:600;margin-bottom:6px;">⚡ Preenchimento rápido — mesma quantidade de horas se repete em vários dias? Preenche um intervalo de uma vez.</div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;">
-        <div><label style="font-size:11px;color:var(--ink-soft);display:block;">Horas/dia</label><input type="number" step="0.5" min="0" max="24" id="loteHoras" style="width:70px;padding:6px 8px;border:1px solid var(--line);border-radius:6px;" placeholder="9"></div>
-        <div><label style="font-size:11px;color:var(--ink-soft);display:block;">Do dia</label><input type="number" min="1" max="31" id="loteDe" style="width:60px;padding:6px 8px;border:1px solid var(--line);border-radius:6px;" placeholder="13"></div>
-        <div><label style="font-size:11px;color:var(--ink-soft);display:block;">Até o dia</label><input type="number" min="1" max="31" id="loteAte" style="width:60px;padding:6px 8px;border:1px solid var(--line);border-radius:6px;" placeholder="16"></div>
-        <label style="display:flex;align-items:center;gap:5px;font-size:11.5px;cursor:pointer;padding-bottom:7px;"><input type="checkbox" id="loteSoUteis" checked> só seg-sex</label>
-        <button type="button" class="btn ghost" style="padding:7px 12px;font-size:12.5px;" onclick="aplicarHorasEmLote()">Aplicar no calendário</button>
+    <div style="font-size:11.5px;color:var(--ink-soft);margin:10px 0 16px;">Se essa pessoa trabalhou em mais de uma empresa nesse mês, registre os dias de uma empresa, salve, depois troque a empresa aqui em cima e registre os dias da outra — cada lançamento guarda a empresa e o valor/hora certos.</div>
+    <div class="hours-quickfill">
+      <div class="hours-quickfill-title">⚡ Preenchimento rápido — mesma quantidade de horas se repete em vários dias? Preenche um intervalo de uma vez.</div>
+      <div class="hours-quickfill-row">
+        <div><label>Horas/dia</label><input type="number" step="0.5" min="0" max="24" id="loteHoras" placeholder="9"></div>
+        <div><label>Do dia</label><input type="number" min="1" max="31" id="loteDe" placeholder="13"></div>
+        <div><label>Até o dia</label><input type="number" min="1" max="31" id="loteAte" placeholder="16"></div>
+        <label class="hours-quickfill-check"><input type="checkbox" id="loteSoUteis" checked> só seg-sex</label>
+        <button type="button" class="btn ghost" onclick="aplicarHorasEmLote()">Aplicar no calendário</button>
       </div>
     </div>
     <div class="hours-cal-weekdays"><span>Dom</span><span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span><span>Sex</span><span>Sáb</span></div>
@@ -4764,7 +4807,11 @@ function deleteItem(key, id){
 }
 
 function showModal(){ document.getElementById('overlay').classList.add('show'); }
-function closeModal(){ document.getElementById('overlay').classList.remove('show'); }
+function closeModal(){
+  document.getElementById('overlay').classList.remove('show');
+  // volta o modal pro tamanho padrão — só o calendário de horas usa a versão larga (modal-cal)
+  document.getElementById('modalBody').className = 'modal';
+}
 document.getElementById('overlay').addEventListener('click', (e)=>{ if (e.target.id==='overlay') closeModal(); });
 
 /* =========================================================
