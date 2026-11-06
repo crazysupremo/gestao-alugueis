@@ -3392,6 +3392,7 @@ function saveTrabalhador(id){
     desconto: document.getElementById('f_desconto').value || 'normal',
     horas: existing ? existing.horas || [] : [],
   };
+  if (existing && Number(data.valorHora) !== Number(existing.valorHora||0)) aplicarValorNasHoras(data, data.valorHora);
   const idx = state.trabalhadores.findIndex(t=>t.id===id);
   if (idx >= 0) state.trabalhadores[idx] = data; else state.trabalhadores.push(data);
   persist('trabalhadores');
@@ -4106,8 +4107,17 @@ function updateValorHora(trabId, value){
   const t = state.trabalhadores.find(x=>x.id===trabId);
   if (!t) return;
   t.valorHora = value;
+  aplicarValorNasHoras(t, value);
   persist('trabalhadores');
   render();
+}
+
+// Quando o valor/hora do cadastro muda, as horas já lançadas (da empresa atual) acompanham.
+function aplicarValorNasHoras(t, valor){
+  const v = Number(valor) || 0;
+  (t.horas||[]).forEach(h => {
+    if (empresaIdEntrada(h, t) === (t.empresaId||'')) h.valorHora = v;
+  });
 }
 
 function openHoraForm(trabId, month, empresaId){
@@ -4173,7 +4183,7 @@ function openHoraForm(trabId, month, empresaId){
       <input type="month" id="calMonthInput" value="${month}" onchange="openHoraForm('${trabId}', this.value, document.getElementById('calEmpresaInput').value)"></div>
       <div><label>Empresa nesse mês</label>
       <select id="calEmpresaInput" onchange="openHoraForm('${trabId}', document.getElementById('calMonthInput').value, this.value)">${empresaOptions}</select></div>
-      <div><label>Valor/hora nessa empresa (€)</label>
+      <div><label>Valor/hora (€) — altere aqui se for outro</label>
       <input type="number" step="0.01" id="calValorHoraInput" value="${valorHoraAtual}"></div>
     </div>
     <div style="font-size:11.5px;color:var(--ink-soft);margin:10px 0 16px;">Se essa pessoa trabalhou em mais de uma empresa nesse mês, registre os dias de uma empresa, salve, depois troque a empresa aqui em cima e registre os dias da outra — cada lançamento guarda a empresa e o valor/hora certos.</div>
