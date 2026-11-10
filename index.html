@@ -5,7 +5,7 @@
 <title>Zelvora RH Solutions</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#0A2320">
+<meta name="theme-color" content="#4F46E5">
 <!-- iOS: permite instalar como app de tela cheia -->
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -526,6 +526,188 @@
   .contract-card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 20px;box-shadow:var(--shadow);margin-bottom:14px;}
   .contract-card-top{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;}
   .contract-sig-img{max-width:220px;border:1px solid var(--line);border-radius:8px;background:#fff;margin-top:10px;}
+
+  /* ===================== NOVO VISUAL (claro, clean, índigo) ===================== */
+  :root{
+    --paper:#F5F6FA; --paper-2:#F8F9FC; --ink:#0F172A; --ink-soft:#64748B; --line:#E7E9F1;
+    --teal:#4F46E5; --teal-dark:#4338CA; --rust:#DC2626; --card:#FFFFFF;
+    --brand-l:#EEF0FF; --ok:#059669; --ok-l:#E6F7F0; --warn:#B45309; --warn-l:#FEF3E2; --bad-l:#FDECEC;
+    --shadow:0 1px 2px rgba(15,23,42,.04),0 4px 16px rgba(15,23,42,.05);
+    --shadow-lg:0 2px 4px rgba(15,23,42,.05),0 12px 28px rgba(79,70,229,.10);
+  }
+  html,body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:14px;}
+  h1,h2,h3,.rh-name,.modal h3,.city-head h2,.lock-left h2,.lock-brand-name,.candidate-head h1,.stat-card .stat-num{font-family:'Inter',sans-serif !important;letter-spacing:-.02em;}
+  h1{font-size:26px;font-weight:750;}
+  .stat-card .stat-num,.stat .num,.kv b,.pill,.rate-edit input{font-family:'Inter',sans-serif;font-variant-numeric:tabular-nums;}
+
+  /* Sidebar clara */
+  .sidebar{background:#fff;color:var(--ink);box-shadow:none;border-right:1px solid var(--line);padding:22px 14px;width:244px;
+    position:sticky;top:0;height:100vh;overflow-y:auto;align-self:flex-start;}
+  .brand{color:var(--ink);font-family:'Inter',sans-serif;font-size:16px;font-weight:750;padding:2px 8px;}
+  .brand small{color:var(--ink-soft);letter-spacing:.06em;font-size:10px;margin-top:3px;}
+  .brand-badge{background:linear-gradient(135deg,#6366F1,#4338CA) !important;border-radius:11px;width:38px;height:38px;box-shadow:0 6px 14px rgba(79,70,229,.35);}
+  .nav{margin-top:14px;}
+  .nav button{color:var(--ink-soft);padding:9px 12px;border-radius:10px;font-weight:550;}
+  .nav button:hover{background:#F1F3F9;color:var(--ink);transform:none;}
+  .nav button.active{background:var(--brand-l);color:var(--teal-dark);font-weight:700;box-shadow:none;}
+  .nav-section{color:#94A3B8;font-size:10.5px;letter-spacing:.09em;margin:18px 0 4px 12px;}
+  .cliente-tabs{border-bottom:1px solid var(--line);margin-top:16px;}
+  .cliente-tab-wrap{background:#F1F3F9;}
+  .cliente-tab-wrap:hover{background:var(--brand-l);}
+  .cliente-tab{color:var(--ink-soft);}
+  .cliente-tab-wrap:has(.cliente-tab.active){background:var(--teal);}
+  .cliente-tab.active{color:#fff;}
+  .cliente-tab-del{color:#94A3B8;}
+  .cliente-tab-wrap:has(.cliente-tab.active) .cliente-tab-del{color:#fff;}
+  .cliente-tab.add-btn{border:1px dashed #CBD2E0;color:var(--ink-soft);}
+  .cliente-tab.add-btn:hover{border-color:var(--teal);color:var(--teal);}
+  .sidebar-foot{color:var(--ink-soft);padding:12px 8px 0;border-top:1px solid var(--line);}
+  .sidebar-foot a{color:var(--teal) !important;font-weight:600;text-decoration:none;}
+  .global-search-wrap input{background:#fff;border:1px solid var(--line);color:var(--ink);border-radius:11px;padding:10px 12px;}
+  .global-search-wrap input::placeholder{color:#94A3B8;}
+  .global-search-wrap input:focus{border-color:var(--teal);background:#fff;box-shadow:0 0 0 4px rgba(79,70,229,.12);}
+  .global-search-results{box-shadow:0 14px 40px rgba(15,23,42,.18);border:1px solid var(--line);}
+
+  /* Conteúdo */
+  .main{padding:30px 38px 70px;max-width:1280px;}
+  .topbar{border-bottom:none;margin-bottom:22px;padding-bottom:0;align-items:flex-end;}
+  .subtitle{color:var(--ink-soft);}
+
+  /* Botões */
+  .btn{background:var(--teal);box-shadow:0 4px 12px rgba(79,70,229,.28);border-radius:11px;padding:10px 18px;font-weight:650;}
+  .btn:hover{filter:none;background:var(--teal-dark);box-shadow:0 6px 16px rgba(79,70,229,.34);}
+  .btn.rust{background:var(--rust);box-shadow:0 4px 12px rgba(220,38,38,.25);}
+  .btn.ghost{background:#fff;color:var(--ink);border:1px solid var(--line);box-shadow:none;}
+  .btn.ghost:hover{background:#F8F9FC;border-color:#C7CCE0;color:var(--ink);}
+
+  /* Cartões */
+  .card,.rh-card,.stat-card,.contract-card{border-radius:16px;border:1px solid var(--line);box-shadow:var(--shadow);}
+  .card:hover,.stat-card:hover{transform:none;border-color:#D5D9EA;}
+  .stat-card::before{display:none;}
+  .stat-card .stat-icon{background:var(--brand-l) !important;border-radius:11px;}
+  .stat-card .stat-num{font-size:28px;font-weight:750;}
+  .stat{background:var(--paper-2);border:1px solid var(--line);border-radius:12px;}
+  .stat .num{color:var(--ink);font-size:20px;}
+  .empty{background:#fff;border-color:#D5D9EA;border-radius:16px;}
+
+  /* Tabelas */
+  table{border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);}
+  th{background:#FAFBFD;color:#94A3B8;font-size:10.5px;letter-spacing:.08em;padding:12px 16px;}
+  td{border-bottom:1px solid #F0F2F7;}
+  tbody tr:hover td{background:#F6F7FF;}
+  .pill{background:#EEF1F6;border:none;color:var(--ink-soft);font-weight:650;padding:3px 10px;}
+  .status.ativo{background:var(--ok-l);color:var(--ok);}
+  .status.inativo{background:var(--bad-l);color:var(--rust);}
+
+  /* Formulários e modais */
+  .overlay{background:rgba(15,23,42,.42);backdrop-filter:blur(3px);}
+  .modal{border-radius:20px;box-shadow:0 30px 80px rgba(15,23,42,.28);animation:modalIn .18s ease-out;}
+  @keyframes modalIn{from{opacity:0;transform:translateY(10px) scale(.985);}to{opacity:1;transform:none;}}
+  .field input,.field select,.hours-cal-head input,.hours-cal-head select,.rate-edit input{border-radius:10px;background:#fff;border:1px solid var(--line);}
+  .field input:focus,.field select:focus,.rate-edit input:focus,.hours-cal-head input:focus,.hours-cal-head select:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 4px rgba(79,70,229,.12);}
+  .hours-cal-day{border-radius:10px;background:#fff;}
+  .hours-cal-day.has-value{background:var(--brand-l);border-color:#C9CEFF;}
+  .hours-cal-day input{color:var(--teal-dark);}
+  .hours-quickfill{background:var(--brand-l);border:1px dashed #C9CEFF;border-radius:12px;}
+  .icon-btn:hover{color:var(--teal);background:var(--brand-l);}
+  .entries-toggle{color:var(--teal);}
+
+  /* Assistente IA */
+  .ai-fab,.ai-panel-head,.ai-msg.user,.ai-panel-input button{background:linear-gradient(135deg,#6366F1,#4338CA);}
+  .ai-fab{box-shadow:0 10px 28px rgba(79,70,229,.4);}
+  .ai-confirm-yes{background:var(--teal);}
+
+  /* Login */
+  .lock-left{background:#fff;}
+  .lock-logo{background:linear-gradient(135deg,#6366F1,#4338CA);box-shadow:0 8px 20px rgba(79,70,229,.38);}
+  .lock-logo span{color:#fff !important;}
+  .lock-input-wrap input:focus{box-shadow:0 0 0 4px rgba(79,70,229,.15);}
+  .lock-right{background:linear-gradient(160deg,#1E1B4B 0%,#312E81 40%,#4F46E5 75%,#818CF8 100%);}
+  .candidate-wrap{background:var(--paper);}
+  .bubble.user{background:var(--teal);}
+
+  /* Central inteligente */
+  .smart{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));margin-bottom:22px;}
+  .smart-item{display:flex;gap:12px;align-items:flex-start;background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px 16px;cursor:pointer;box-shadow:var(--shadow);text-align:left;font-family:inherit;color:inherit;width:100%;}
+  .smart-item:hover{border-color:#C9CEFF;box-shadow:var(--shadow-lg);}
+  .smart-item .si{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;font-size:18px;flex:none;}
+  .smart-item.bad .si{background:var(--bad-l);} .smart-item.warn .si{background:var(--warn-l);} .smart-item.info .si{background:var(--brand-l);} .smart-item.ok .si{background:var(--ok-l);}
+  .smart-item b{display:block;font-size:13.5px;font-weight:700;}
+  .smart-item span.t{display:block;color:var(--ink-soft);font-size:12.5px;margin-top:2px;line-height:1.4;}
+  .smart-item .go{margin-left:auto;color:var(--teal);font-weight:700;font-size:12px;white-space:nowrap;align-self:center;}
+  .smart-head{display:flex;align-items:center;justify-content:space-between;margin:4px 0 12px;}
+  .smart-head h2{font-size:16px;margin:0;font-weight:750;}
+  .kbd{font-size:10.5px;border:1px solid var(--line);border-radius:6px;padding:1px 6px;color:var(--ink-soft);background:#fff;}
+  @media (max-width: 860px){
+    .sidebar{position:sticky;height:auto;width:100%;border-right:none;border-bottom:1px solid var(--line);align-self:stretch;}
+    .main{padding:18px 14px 60px;}
+  }
+
+  /* ===== Componentes da nova interface (z-*) ===== */
+  .z-head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:22px;}
+  .z-head h1{font-size:28px;font-weight:780;letter-spacing:-.03em;}
+  .z-sub{color:var(--ink-soft);margin-top:4px;font-size:14px;}
+  .z-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+  .z-btn{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:7px;padding:10px 16px;border-radius:11px;font-weight:650;font-size:13.5px;transition:.15s;box-sizing:border-box;}
+  .z-btn.p{background:var(--teal);color:#fff;box-shadow:0 4px 12px rgba(79,70,229,.28);}
+  .z-btn.p:hover{background:var(--teal-dark);}
+  .z-btn.g{background:#fff;color:var(--ink);border:1px solid var(--line);}
+  .z-btn.g:hover{background:#F8F9FC;border-color:#C7CCE0;}
+  .z-btn.s{padding:6px 12px;font-size:12.5px;border-radius:9px;}
+  .z-grid{display:grid;gap:16px;margin-bottom:18px;}
+  .z-g4{grid-template-columns:repeat(4,1fr);} .z-g3{grid-template-columns:repeat(3,1fr);} .z-g2{grid-template-columns:1.5fr 1fr;}
+  @media(max-width:1050px){.z-g4{grid-template-columns:1fr 1fr;}.z-g2{grid-template-columns:1fr;}}
+  @media(max-width:560px){.z-g4,.z-g3{grid-template-columns:1fr;}}
+  .z-kpi{background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px 20px;box-shadow:var(--shadow);}
+  .z-kpi-top{display:flex;justify-content:space-between;align-items:center;color:var(--ink-soft);font-size:12.5px;font-weight:600;}
+  .z-kpi-top i{font-style:normal;width:32px;height:32px;border-radius:10px;background:var(--brand-l);display:grid;place-items:center;font-size:16px;}
+  .z-kpi-v{font-size:28px;font-weight:780;letter-spacing:-.04em;margin-top:8px;font-variant-numeric:tabular-nums;}
+  .z-kpi-n{font-size:12px;color:var(--ink-soft);margin-top:4px;}
+  .z-card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:20px;box-shadow:var(--shadow);}
+  .z-card-h{display:flex;justify-content:space-between;align-items:center;gap:10px;font-weight:720;font-size:15px;margin-bottom:14px;}
+  .z-foot{margin-top:12px;padding-top:12px;border-top:1px solid var(--line);font-size:13px;color:var(--ink-soft);}
+  .z-av{display:inline-grid;place-items:center;border-radius:50%;font-weight:750;flex:none;}
+  .z-who{display:flex;gap:11px;align-items:center;min-width:0;}
+  .z-who b{display:block;font-weight:650;font-size:14px;} .z-who small,.z-row small{display:block;color:#94A3B8;font-size:12px;}
+  .z-pill{display:inline-flex;align-items:center;padding:3px 10px;border-radius:99px;font-size:11.5px;font-weight:680;background:#EEF1F6;color:var(--ink-soft);white-space:nowrap;}
+  .z-pill.ok{background:var(--ok-l);color:var(--ok);} .z-pill.warn{background:var(--warn-l);color:var(--warn);} .z-pill.bad{background:var(--bad-l);color:#DC2626;} .z-pill.b{background:var(--brand-l);color:var(--teal-dark);}
+  .z-bar{height:7px;background:#EDEFF5;border-radius:99px;overflow:hidden;margin:2px 0 6px;} .z-bar i{display:block;height:100%;background:linear-gradient(90deg,#34D399,#059669);border-radius:99px;}
+  .z-tw{background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);overflow:auto;margin-bottom:18px;}
+  .z-tw table{border:none;box-shadow:none;border-radius:0;}
+  .z-tw td{vertical-align:middle;padding:12px 16px;}
+  .z-row-click{cursor:pointer;} .z-row-click:hover td{background:#F6F7FF !important;}
+  .z-acts{white-space:nowrap;text-align:right;} .z-acts .icon-btn{font-size:15px;padding:5px 6px;}
+  .z-total td{background:#FAFBFD;border-top:2px solid var(--line);}
+  .z-toolbar{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:16px;}
+  .z-search{position:relative;flex:1;min-width:240px;max-width:420px;} .z-search span{position:absolute;left:13px;top:10px;font-size:14px;}
+  .z-search input{width:100%;padding:11px 14px 11px 38px;border:1px solid var(--line);border-radius:12px;background:#fff;font-family:inherit;font-size:14px;}
+  .z-search input:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 4px rgba(79,70,229,.12);}
+  .z-chips{display:flex;gap:8px;flex-wrap:wrap;}
+  .z-chip{all:unset;cursor:pointer;padding:7px 14px;border-radius:99px;background:#fff;border:1px solid var(--line);font-weight:620;color:var(--ink-soft);font-size:13px;}
+  .z-chip:hover{border-color:#C7CCE0;color:var(--ink);} .z-chip.on{background:var(--ink);color:#fff;border-color:var(--ink);}
+  .z-rate{width:84px;padding:7px 9px;border:1px solid var(--line);border-radius:9px;font-family:inherit;font-weight:650;background:#fff;}
+  .z-rate:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px rgba(79,70,229,.12);}
+  .z-month{padding:9px 12px;border:1px solid var(--line);border-radius:11px;background:#fff;font-family:inherit;font-weight:650;}
+  .z-row{display:flex;gap:12px;align-items:center;padding:11px 0;border-bottom:1px solid #F0F2F7;} .z-row:last-child{border:0;} .z-row b{font-weight:620;font-size:13.5px;}
+  .z-row-b{gap:14px;} .z-ck{width:18px;height:18px;border-radius:6px;border:2px solid #CBD2E0;flex:none;}
+  .z-empty-s{padding:18px 0;color:var(--ink-soft);text-align:center;font-size:13px;}
+  .z-chart{display:flex;align-items:flex-end;gap:14px;height:190px;padding-top:10px;}
+  .z-chart>div{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:6px;height:100%;}
+  .z-chart i{display:block;width:100%;max-width:46px;border-radius:9px 9px 4px 4px;background:var(--brand-l);} .z-chart i.on{background:linear-gradient(180deg,#6366F1,#4338CA);}
+  .z-chart em{font-style:normal;font-size:11.5px;color:#94A3B8;text-transform:capitalize;} .z-chart-v{font-size:11px;font-weight:700;color:var(--ink-soft);height:14px;}
+  .z-menu{position:relative;} .z-menu summary{list-style:none;} .z-menu summary::-webkit-details-marker{display:none;}
+  .z-menu-list{position:absolute;right:0;top:calc(100% + 6px);background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:0 16px 40px rgba(15,23,42,.16);padding:6px;z-index:30;min-width:260px;}
+  .z-menu-list button{all:unset;cursor:pointer;display:block;width:100%;box-sizing:border-box;padding:10px 12px;border-radius:9px;font-size:13.5px;font-weight:550;} .z-menu-list button:hover{background:var(--brand-l);color:var(--teal-dark);}
+  .z-detalhe{background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:6px 18px 18px;margin-top:8px;}
+  .z-detalhe summary{cursor:pointer;font-weight:720;padding:14px 0;font-size:15px;}
+  .z-detalhe .rh-card{box-shadow:none;border:none;padding:0;margin:0;}
+  .z-ov{position:fixed;inset:0;background:rgba(15,23,42,.38);backdrop-filter:blur(2px);opacity:0;pointer-events:none;transition:.2s;z-index:70;} .z-ov.on{opacity:1;pointer-events:auto;}
+  .z-dr{position:fixed;right:0;top:0;bottom:0;width:min(480px,100%);background:#fff;z-index:71;transform:translateX(105%);transition:transform .25s;padding:24px 26px 40px;overflow-y:auto;box-shadow:-14px 0 44px rgba(15,23,42,.14);} .z-dr.on{transform:none;}
+  .z-dr-h{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:18px;}
+  .z-mini .z-kpi{padding:12px 14px;} .z-mini .z-kpi-v{font-size:19px;}
+  .z-dr-acts{display:flex;flex-wrap:wrap;gap:8px;margin:2px 0 18px;}
+  .z-sec{font-size:11px;font-weight:750;letter-spacing:.08em;text-transform:uppercase;color:#94A3B8;margin:22px 0 8px;}
+  .z-kv{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid #F0F2F7;font-size:13.5px;} .z-kv span:first-child{color:var(--ink-soft);}
 </style>
 </head>
 <body>
@@ -583,7 +765,7 @@
     <div class="brand"><span class="brand-badge"><span style="font-family:'Fraunces',Georgia,serif;font-weight:700;font-size:1.1em;color:#EDEAE1;">Z</span></span><span>Zelvora<br>RH Solutions<small>CONSULTORIA DE RH</small></span></div>
     <div id="clienteTabs" class="cliente-tabs"></div>
     <div class="global-search-wrap">
-      <input id="globalSearchInput" placeholder="🔍 Buscar trabalhador, empresa, imóvel..." autocomplete="off" oninput="onGlobalSearch(this.value)" onfocus="onGlobalSearch(this.value)">
+      <input id="globalSearchInput" placeholder="🔍 Buscar…  ( / )" autocomplete="off" oninput="onGlobalSearch(this.value)" onfocus="onGlobalSearch(this.value)">
       <div id="globalSearchResults" class="global-search-results"></div>
     </div>
     <div class="nav">
@@ -2191,11 +2373,44 @@ function imoveisVencendoEmBreve(limiteDias){
 function empresaNome(id){ const e = state.empresas.find(x=>x.id===id); return e ? e.nome : null; }
 function imovelNome(id){ const i = state.imoveis.find(x=>x.id===id); return i ? i.nome : '—'; }
 
-function setView(v){
-  view = v;
-  document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active', b.dataset.view===v));
-  render();
+const VIEWS_VALIDAS = ['dashboard','tarefas','trabalhadores','horas','empresas','imoveis','vagas','trabalhos','contratos','relatorioGeral'];
+function viewDoHash(){
+  const v = (location.hash || '').replace(/^#\/?/, '');
+  return VIEWS_VALIDAS.includes(v) ? v : null;
 }
+function marcarNavAtivo(v){
+  document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active', b.dataset.view===v));
+}
+function setView(v, semHistorico){
+  view = v;
+  marcarNavAtivo(v);
+  // cada tela vira um endereço (#/horas...) — botão voltar/avançar do navegador funciona
+  // e ao recarregar a página você volta pra mesma tela.
+  if (!semHistorico && VIEWS_VALIDAS.includes(v) && location.hash !== '#/' + v){
+    try { history.pushState(null, '', '#/' + v); } catch(e){}
+  }
+  render();
+  try { window.scrollTo(0, 0); } catch(e){}
+}
+window.addEventListener('popstate', () => {
+  const app = document.getElementById('appRoot');
+  if (!app || app.style.display === 'none') return;
+  setView(viewDoHash() || 'dashboard', true);
+});
+(function(){ const v0 = viewDoHash(); if (v0){ view = v0; marcarNavAtivo(v0); } })();
+// Atalhos: "/" ou Ctrl/Cmd+K focam a busca global; Esc fecha modal.
+document.addEventListener('keydown', e => {
+  const tag = (document.activeElement && document.activeElement.tagName) || '';
+  const digitando = ['INPUT','TEXTAREA','SELECT'].includes(tag);
+  if ((e.key === '/' && !digitando) || ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k')){
+    const inp = document.getElementById('globalSearchInput');
+    if (inp && inp.offsetParent !== null){ e.preventDefault(); inp.focus(); inp.select(); }
+  }
+  if (e.key === 'Escape'){
+    const ov = document.getElementById('overlay');
+    if (ov && ov.classList.contains('show') && typeof closeModal === 'function') closeModal();
+  }
+});
 
 document.querySelectorAll('.nav button').forEach(b=>{
   b.addEventListener('click', ()=> setView(b.dataset.view));
@@ -2444,7 +2659,78 @@ function barChartHTML(porEmpresa, campo, cor){
 let dashboardMostrarImoveis = false;
 function toggleDashboardImoveis(){ dashboardMostrarImoveis = !dashboardMostrarImoveis; render(); }
 
-function renderDashboard(main){
+// Central inteligente: olha os dados sozinho e mostra o que precisa de atenção, com atalho pra resolver.
+function painelInteligenteHTML(){
+  const itens = [];
+  try {
+    const trabs = trabalhadoresDoClienteAtivo();
+    const hoje = new Date();
+    const mesAnt = mesAnterior();
+    const mesAtual = hoje.getFullYear() + '-' + String(hoje.getMonth()+1).padStart(2,'0');
+
+    // 1) pagamentos do mês anterior ainda não quitados
+    let faltaTotal = 0, nPend = 0;
+    trabs.forEach(t => {
+      const d = devidoNoMes(t, mesAnt), p = pagoNoMes(t, mesAnt);
+      if (d > 0 && d - p > 0.009){ faltaTotal += d - p; nPend++; }
+    });
+    if (nPend > 0){
+      const dia = hoje.getDate();
+      const atrasado = hoje.getMonth() !== new Date(mesAnt + '-01T00:00:00').getMonth() && dia > 10;
+      itens.push({ cls: atrasado ? 'bad' : 'warn', ic:'💶',
+        t: `${nPend} pagamento(s) de ${nomeMes(mesAnt)} em aberto`,
+        d: `Faltam ${eur2(faltaTotal)} — ${atrasado ? 'passou do dia 10, está atrasado' : 'vence dia 10'}.`, go:'horas', ordem: atrasado ? 0 : 1 });
+    }
+
+    // 2) quem ainda não tem horas lançadas no mês atual (depois do dia 5)
+    if (hoje.getDate() >= 5){
+      const sem = trabs.filter(t => !(t.horas||[]).some(h => (h.data||'').startsWith(mesAtual)));
+      if (sem.length > 0 && sem.length < trabs.length + 1){
+        itens.push({ cls:'info', ic:'⏱️', t:`${sem.length} sem horas lançadas em ${nomeMes(mesAtual)}`,
+          d: sem.slice(0,3).map(t=>t.nome.split(' ')[0]).join(', ') + (sem.length>3 ? ` e mais ${sem.length-3}` : ''), go:'horas', ordem: 3 });
+      }
+    }
+
+    // 3) cadastro incompleto (valor/hora, IBAN, contato)
+    const semValor = trabs.filter(t => !(Number(t.valorHora) > 0)).length;
+    const semIban = trabs.filter(t => !(t.iban||'').trim()).length;
+    const semContato = trabs.filter(t => !(t.contato||'').trim()).length;
+    if (semValor + semIban + semContato > 0){
+      const partes = [];
+      if (semValor) partes.push(`${semValor} sem valor/hora`);
+      if (semIban) partes.push(`${semIban} sem IBAN`);
+      if (semContato) partes.push(`${semContato} sem contato`);
+      itens.push({ cls:'warn', ic:'🧾', t:'Cadastros incompletos', d: partes.join(' · '), go:'trabalhadores', ordem: 2 });
+    }
+
+    // 4) tarefas urgentes e aluguéis perto de vencer
+    const tu = tarefasUrgentes(5);
+    if (tu.length > 0){
+      const atras = tu.filter(x => x.dias < 0).length;
+      itens.push({ cls: atras ? 'bad' : 'warn', ic:'📌', t:`${tu.length} tarefa(s) precisam de atenção`,
+        d: tu.slice(0,2).map(x=>x.tarefa.titulo).join(' · '), go:'tarefas', ordem: atras ? 0 : 2 });
+    }
+    const venc = imoveisVencendoEmBreve(5);
+    if (venc.length > 0){
+      itens.push({ cls:'warn', ic:'🏠', t:`${venc.length} aluguel(is) vencendo em breve`,
+        d: venc.slice(0,2).map(v=>v.imovel.nome).join(' · '), go:'imoveis', ordem: 1 });
+    }
+
+    // 5) alerta de horas acima de 200h no mês atual (desconto 220)
+    const acima = trabs.filter(t => (t.horas||[]).filter(h => (h.data||'').startsWith(mesAtual)).reduce((a,h)=>a+Number(h.quantidade||0),0) > 200).length;
+    if (acima > 0) itens.push({ cls:'info', ic:'📈', t:`${acima} trabalhador(es) acima de 200h neste mês`, d:'Confira o desconto (normal/220) antes de fechar a folha.', go:'horas', ordem: 4 });
+  } catch(e){ console.warn('painel inteligente', e); }
+
+  itens.sort((a,b)=>a.ordem-b.ordem);
+  if (itens.length === 0){
+    itens.push({ cls:'ok', ic:'✅', t:'Tudo em dia', d:'Nenhum pagamento, tarefa ou cadastro pendente agora.', go:'dashboard', ordem:9 });
+  }
+  return `<div class="smart-head"><h2>🧠 Prioridades de hoje</h2><span class="kbd">/ buscar</span></div>
+    <div class="smart">${itens.map(i => `<button class="smart-item ${i.cls}" onclick="setView('${i.go}')">
+      <span class="si">${i.ic}</span><span><b>${i.t}</b><span class="t">${i.d}</span></span><span class="go">Abrir ›</span></button>`).join('')}</div>`;
+}
+
+function renderDashboardLegado(main){
   const clienteAtivo = state.clientes.find(c=>c.id===clienteAtivoId);
   let html = `<div class="topbar">
     <div><h1>Visão geral</h1><div class="subtitle">Zelvora RH Solutions — Consultoria de RH para ${clienteAtivo ? clienteAtivo.nome : '—'}</div></div>
@@ -2453,6 +2739,7 @@ function renderDashboard(main){
 
   const k = calcularIndicadoresDashboard();
 
+  html += painelInteligenteHTML();
   html += renderPainelAvisos();
 
   const margemNeg = k.totalMargem < 0;
@@ -3037,7 +3324,7 @@ function toggleDocumentoTrabalhador(trabId, chave){
   if (['trabalhadores','dashboard'].includes(view)) render();
 }
 
-function renderTrabalhadores(main){
+function renderTrabalhadoresLegado(main){
   const clienteAtivo = state.clientes.find(c=>c.id===clienteAtivoId);
   const trabsCliente = trabalhadoresDoClienteAtivo();
   let html = `<div class="topbar">
@@ -3083,9 +3370,10 @@ function renderTrabalhadores(main){
 function filtrarTrabalhadoresTabela(){
   const q = (document.getElementById('buscaTrabalhadoresInput').value||'').trim().toLowerCase();
   const linhas = Array.from(document.querySelectorAll('#tabelaTrabalhadores tbody tr'));
+  const chip = window._trabEmpresaFiltro || '';
   let visiveis = 0;
   linhas.forEach(tr => {
-    const bate = !q || (tr.dataset.busca||'').includes(q);
+    const bate = (!q || (tr.dataset.busca||'').includes(q)) && (!chip || tr.dataset.empresa === chip);
     tr.style.display = bate ? '' : 'none';
     if (bate) visiveis++;
   });
@@ -3582,7 +3870,7 @@ function renderPainelAvisos(){
   </div>`;
 }
 
-function renderHoras(main){
+function renderHorasLegado(main){
   defaultReportPeriod();
   const clienteAtivo = state.clientes.find(c=>c.id===clienteAtivoId);
   const empresasCliente = empresasDoClienteAtivo();
@@ -3733,8 +4021,245 @@ function renderHoras(main){
   main.innerHTML = html;
 }
 
+/* =====================================================================
+   NOVA INTERFACE (v6): Painel, Trabalhadores com ficha lateral, Horas & Pagamentos
+   ===================================================================== */
+let mesRefHoras = null;
+function mesAtualStr(){ const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0'); }
+function mesReferenciaHoras(){
+  if (!mesRefHoras) mesRefHoras = new Date().getDate() <= 10 ? mesAnterior() : mesAtualStr();
+  return mesRefHoras;
+}
+function mudarMesReferencia(m){ if (m){ mesRefHoras = m; render(); } }
+function horasNoMes(t, mes){
+  return (t.horas||[]).filter(h => (h.data||'').startsWith(mes)).reduce((a,h)=>a + Number(h.quantidade||0), 0);
+}
+function iniciaisNome(n){ return (n||'?').split(/\s+/).filter(Boolean).slice(0,2).map(x=>x[0]).join('').toUpperCase(); }
+function avatarHTML(n, tam){
+  const cores = ['#EEF0FF|#4338CA','#E6F7F0|#047857','#FEF3E2|#B45309','#FDECEC|#B91C1C','#E8F4FD|#0369A1','#F3E8FF|#7E22CE'];
+  let h = 0; for (let i=0;i<(n||'').length;i++) h = (h*31 + n.charCodeAt(i)) % 997;
+  const [bg, fg] = cores[h % cores.length].split('|');
+  const s = tam || 36;
+  return `<span class="z-av" style="width:${s}px;height:${s}px;background:${bg};color:${fg};font-size:${Math.round(s*.36)}px;">${iniciaisNome(n)}</span>`;
+}
+function statusPgto(t, mes){
+  const devido = devidoNoMes(t, mes), pago = pagoNoMes(t, mes), falta = devido - pago;
+  if (devido <= 0 && pago <= 0) return { cls:'n', txt:'Sem horas', devido, pago, falta:0 };
+  if (falta <= 0.009) return { cls:'ok', txt:'Pago', devido, pago, falta:0 };
+  if (pago > 0) return { cls:'warn', txt:'Falta ' + eur2(falta), devido, pago, falta };
+  return { cls:'bad', txt:'Não pago', devido, pago, falta };
+}
+function saudacao(){ const h = new Date().getHours(); return h < 12 ? 'Bom dia' : h < 19 ? 'Boa tarde' : 'Boa noite'; }
+function cabecalhoPagina(titulo, sub, acoes){
+  return `<div class="z-head"><div><h1>${titulo}</h1><div class="z-sub">${sub||''}</div></div><div class="z-actions">${acoes||''}</div></div>`;
+}
+function kpiHTML(icone, rotulo, valor, nota, cor){
+  return `<div class="z-kpi"><div class="z-kpi-top"><span>${rotulo}</span><i>${icone}</i></div><div class="z-kpi-v" ${cor?`style="color:${cor}"`:''}>${valor}</div>${nota?`<div class="z-kpi-n">${nota}</div>`:''}</div>`;
+}
+function chipsEmpresasHTML(ativo, fn){
+  const emps = empresasDoClienteAtivo();
+  return `<div class="z-chips"><button class="z-chip ${!ativo?'on':''}" onclick="${fn}('')">Todas</button>${emps.map(e=>`<button class="z-chip ${ativo===e.id?'on':''}" onclick="${fn}('${e.id}')">${e.nome}</button>`).join('')}</div>`;
+}
+
+/* ---------- PAINEL ---------- */
+function renderDashboard(main){
+  const clienteAtivo = state.clientes.find(c=>c.id===clienteAtivoId);
+  const trabs = trabalhadoresDoClienteAtivo();
+  const mes = mesReferenciaHoras();
+  let devido = 0, pago = 0, horasMes = 0;
+  trabs.forEach(t => { devido += devidoNoMes(t, mes); pago += pagoNoMes(t, mes); horasMes += horasNoMes(t, mes); });
+  const pct = devido > 0 ? Math.min(100, Math.round(pago / devido * 100)) : 0;
+  const k = calcularIndicadoresDashboard();
+
+  let html = cabecalhoPagina(`${saudacao()}, ${(typeof usuarioAtual === 'string' && usuarioAtual) ? usuarioAtual.split(' ')[0] : 'Renato'} 👋`,
+    `Resumo de ${nomeMes(mes)} · ${clienteAtivo ? clienteAtivo.nome : '—'}`,
+    `<button class="z-btn g" onclick="gerarInsightIA()">🤖 Análise com IA</button><button class="z-btn p" onclick="setView('horas')">⏱️ Horas & pagamentos</button>`);
+
+  html += `<div class="z-grid z-g4">
+    ${kpiHTML('👷','Trabalhadores ativos', trabs.length, `${k.empresasClientes} empresas · ${k.imoveisAtivos} imóveis`)}
+    ${kpiHTML('⏱️','Horas em ' + nomeMes(mes).split('/')[0], horasMes.toLocaleString('pt-PT') + 'h', trabs.length ? `média ${(horasMes/Math.max(1,trabs.filter(t=>horasNoMes(t,mes)>0).length)).toFixed(0)}h por pessoa` : '')}
+    ${kpiHTML('💶','A pagar', eur2(devido), 'vence dia 10 do mês seguinte')}
+    ${kpiHTML('✅','Já pago', eur2(pago), `<div class="z-bar"><i style="width:${pct}%"></i></div>${pct}% quitado`, 'var(--ok)')}
+  </div>`;
+
+  html += painelInteligenteHTML();
+  html += `<div id="aiInsightBox"></div>`;
+
+  // gráfico de horas dos últimos 6 meses
+  const meses = []; const d0 = new Date(); d0.setDate(1);
+  for (let i=5;i>=0;i--){ const d = new Date(d0.getFullYear(), d0.getMonth()-i, 1); meses.push(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')); }
+  const serie = meses.map(m => trabs.reduce((a,t)=>a+horasNoMes(t,m),0));
+  const maxS = Math.max(...serie, 1);
+  const chart = `<div class="z-chart">${meses.map((m,i)=>`<div><span class="z-chart-v">${serie[i] ? Math.round(serie[i]) : ''}</span><i class="${m===mes?'on':''}" style="height:${Math.max(4, serie[i]/maxS*100)}%"></i><em>${MESES_PT[Number(m.slice(5))-1].slice(0,3)}</em></div>`).join('')}</div>`;
+
+  const tarefas = (state.tarefas||[]).filter(t => !t.concluida && t.clienteId === clienteAtivoId).sort((a,b)=>(a.data||'9999') < (b.data||'9999') ? -1 : 1).slice(0,4);
+  const tarefasHTML = tarefas.length ? tarefas.map(t=>`<div class="z-row"><span class="z-ck"></span><div><b>${t.titulo}</b><small>${t.data ? 'vence ' + formatDate(t.data) : 'sem data'}</small></div></div>`).join('') : '<div class="z-empty-s">Nenhuma tarefa pendente 🎉</div>';
+
+  html += `<div class="z-grid z-g2">
+    <div class="z-card"><div class="z-card-h">Horas por mês <span class="z-pill b">últimos 6 meses</span></div>${chart}</div>
+    <div class="z-card"><div class="z-card-h">Próximas tarefas <button class="z-btn g s" onclick="setView('tarefas')">Ver todas</button></div>${tarefasHTML}</div>
+  </div>`;
+
+  const pend = trabs.map(t => ({t, s: statusPgto(t, mes)})).filter(x => x.s.falta > 0.009).sort((a,b)=>b.s.falta - a.s.falta).slice(0,6);
+  html += `<div class="z-card" style="margin-top:16px"><div class="z-card-h">Pagamentos pendentes · ${nomeMes(mes)} <button class="z-btn p s" onclick="setView('horas')">Gerir pagamentos</button></div>
+    ${pend.length ? pend.map(x=>`<div class="z-row z-row-b"><div class="z-who">${avatarHTML(x.t.nome,34)}<div><b>${x.t.nome}</b><small>${empresaNome(x.t.empresaId)||'Sem empresa'}</small></div></div><div style="margin-left:auto;text-align:right"><b>${eur2(x.s.falta)}</b><small style="display:block"><span class="z-pill ${x.s.cls}">${x.s.txt}</span></small></div><button class="z-btn g s" onclick="openPagamentoForm('${x.t.id}','${mes}')">Informar</button></div>`).join('') : '<div class="z-empty-s">Todos os pagamentos de ' + nomeMes(mes) + ' estão em dia ✅</div>'}</div>`;
+
+  html += `<div class="z-grid z-g2" style="margin-top:16px">
+    <div class="z-card"><div class="z-card-h">Receita por empresa <span class="z-pill b">mês atual</span></div>${barChartHTML(k.porEmpresa, 'receita', 'var(--teal)')}
+      <div class="z-foot">Margem estimada: <b style="color:${k.totalMargem<0?'var(--rust)':'var(--ok)'}">${eur2(k.totalMargem)}</b></div></div>
+    <div class="z-card"><div class="z-card-h">Avisos <span class="z-pill n">horas</span></div>${renderPainelAvisos() || '<div class="z-empty-s">Sem avisos.</div>'}</div>
+  </div>`;
+  main.innerHTML = html;
+}
+
+/* ---------- TRABALHADORES ---------- */
+function filtrarTrabEmpresa(id){ window._trabEmpresaFiltro = id; render(); }
+function renderTrabalhadores(main){
+  const clienteAtivo = state.clientes.find(c=>c.id===clienteAtivoId);
+  const trabs = trabalhadoresDoClienteAtivo().slice().sort((a,b)=>a.nome.localeCompare(b.nome));
+  const mes = mesReferenciaHoras();
+  const chip = window._trabEmpresaFiltro || '';
+  const menu = `<details class="z-menu"><summary class="z-btn g">⋯ Mais</summary><div class="z-menu-list">
+      <button onclick="openBulkTrabalhadores()">📋 Importar em lote</button>
+      <button onclick="openBulkRenameTrabalhadores()">🔄 Atualizar nomes em lote</button>
+      <button onclick="openBulkDescontoTrabalhadores()">🏷️ Atualizar desconto em lote</button>
+      <button onclick="openBulkValorHoraTrabalhadores()">💶 Atualizar valor/hora em lote</button></div></details>`;
+  let html = cabecalhoPagina('Trabalhadores', `${trabs.length} pessoa(s) · ${clienteAtivo ? clienteAtivo.nome : '—'} · clique numa linha para abrir a ficha`,
+    `${menu}<button class="z-btn p" onclick="openTrabalhadorForm()">＋ Novo trabalhador</button>`);
+  if (trabs.length === 0){ main.innerHTML = html + `<div class="empty">Ainda não há trabalhadores para ${clienteAtivo ? clienteAtivo.nome : 'este cliente'}.</div>`; return; }
+  html += `<div class="z-toolbar"><div class="z-search"><span>🔍</span><input type="text" id="buscaTrabalhadoresInput" oninput="filtrarTrabalhadoresTabela()" placeholder="Buscar por nome, cargo, empresa, contato ou IBAN…" autocomplete="off"></div>${chipsEmpresasHTML(chip,'filtrarTrabEmpresa')}</div>`;
+  html += `<div id="buscaTrabalhadoresVazio" class="empty" style="display:none;">Nenhum trabalhador encontrado.</div>`;
+  html += `<div class="z-tw"><table id="tabelaTrabalhadores"><thead><tr><th>Trabalhador</th><th>Empresa</th><th>Valor/hora</th><th>${nomeMes(mes)}</th><th>Documentos</th><th></th></tr></thead><tbody>`;
+  trabs.forEach(t => {
+    const busca = [t.nome, t.cargo, imovelNome(t.imovelId), empresaNome(t.empresaId), t.contato, t.iban].filter(Boolean).join(' ').toLowerCase();
+    const s = statusPgto(t, mes);
+    html += `<tr class="z-row-click" id="row-${t.id}" data-busca="${busca.replace(/"/g,'&quot;')}" data-empresa="${t.empresaId||''}" onclick="abrirFicha('${t.id}',event)">
+      <td><div class="z-who">${avatarHTML(t.nome)}<div><b>${t.nome}</b><small>${t.cargo || 'Sem cargo'}${t.contato ? ' · ' + t.contato : ''}</small></div></div></td>
+      <td>${empresaNome(t.empresaId) ? `<span class="z-pill n">${empresaNome(t.empresaId)}</span>` : '—'}</td>
+      <td><b>${t.valorHora ? eur2(t.valorHora) : '—'}</b></td>
+      <td>${s.devido > 0 || s.pago > 0 ? `<span class="z-pill ${s.cls}">${s.txt}</span>` : '<span class="z-pill n">—</span>'}</td>
+      <td>${docsBadges(t)}</td>
+      <td class="z-acts">
+        <button class="icon-btn" title="Link individual pra enviar horas" onclick="copiarLinkIndividualHoras('${t.id}')">🔗</button>
+        <button class="icon-btn" title="Editar" onclick="openTrabalhadorForm('${t.id}')">✏️</button>
+        <button class="icon-btn" title="Trocar empresa / valor" onclick="openTrocaEmpresaForm('${t.id}')">🔁</button>
+        <button class="icon-btn del" title="Excluir" onclick="deleteItem('trabalhadores','${t.id}')">🗑️</button>
+      </td></tr>`;
+  });
+  html += `</tbody></table></div>`;
+  main.innerHTML = html;
+  if (chip) filtrarTrabalhadoresTabela();
+}
+
+/* ---------- FICHA LATERAL DO TRABALHADOR ---------- */
+function garantirFicha(){
+  if (document.getElementById('fichaDrawer')) return;
+  const ov = document.createElement('div'); ov.id = 'fichaOv'; ov.className = 'z-ov'; ov.onclick = fecharFicha;
+  const dr = document.createElement('div'); dr.id = 'fichaDrawer'; dr.className = 'z-dr';
+  document.body.appendChild(ov); document.body.appendChild(dr);
+}
+function fecharFicha(){
+  const ov = document.getElementById('fichaOv'), dr = document.getElementById('fichaDrawer');
+  if (ov) ov.classList.remove('on'); if (dr) dr.classList.remove('on');
+}
+function abrirFicha(id, ev){
+  if (ev && ev.target && ev.target.closest && ev.target.closest('button, a, input, select')) return;
+  const t = state.trabalhadores.find(x=>x.id===id); if (!t) return;
+  garantirFicha();
+  const mes = mesReferenciaHoras(), s = statusPgto(t, mes);
+  const ultimos = (t.horas||[]).slice().sort((a,b)=>a.data < b.data ? 1 : -1).slice(0,8);
+  const pagos = (t.pagamentos||[]).slice().sort((a,b)=>a.data < b.data ? 1 : -1).slice(0,5);
+  document.getElementById('fichaDrawer').innerHTML = `
+    <div class="z-dr-h"><div class="z-who">${avatarHTML(t.nome,52)}<div><b style="font-size:17px">${t.nome}</b><small>${t.cargo || 'Sem cargo'} · ${empresaNome(t.empresaId) || 'Sem empresa'}</small></div></div><button class="z-btn g s" onclick="fecharFicha()">✕</button></div>
+    <div class="z-grid z-g3 z-mini">
+      ${kpiHTML('⏱️','Horas', horasNoMes(t,mes) + 'h', nomeMes(mes))}
+      ${kpiHTML('💶','Devido', eur2(s.devido), '')}
+      ${kpiHTML('✅','Pago', eur2(s.pago), `<span class="z-pill ${s.cls}">${s.txt}</span>`)}
+    </div>
+    <div class="z-dr-acts">
+      <button class="z-btn p" onclick="fecharFicha();openHoraForm('${t.id}','${mes}')">⏱️ Registrar horas</button>
+      <button class="z-btn g" onclick="fecharFicha();openPagamentoForm('${t.id}','${mes}')">💶 Informar pagamento</button>
+      <button class="z-btn g" onclick="fecharFicha();openTrabalhadorForm('${t.id}')">✏️ Editar</button>
+      <button class="z-btn g" onclick="fecharFicha();openTrocaEmpresaForm('${t.id}')">🔁 Trocar empresa</button>
+      <button class="z-btn g" onclick="copiarLinkIndividualHoras('${t.id}')">🔗 Link p/ enviar horas</button>
+    </div>
+    <div class="z-sec">Valor por hora</div>
+    <div class="field"><input type="number" step="0.01" value="${t.valorHora||0}" onchange="updateValorHora('${t.id}', this.value);abrirFicha('${t.id}')"></div>
+    <div class="z-sec">Dados</div>
+    <div class="z-kv"><span>Contato</span><b>${t.contato || '—'}</b></div>
+    <div class="z-kv"><span>IBAN</span><b style="font-size:12px">${t.iban || '—'}</b></div>
+    <div class="z-kv"><span>Imóvel</span><b>${imovelNome(t.imovelId)}</b></div>
+    <div class="z-kv"><span>Desconto</span><b>${t.desconto || 'normal'}</b></div>
+    <div class="z-kv"><span>Documentos</span><span>${docsBadges(t)}</span></div>
+    <div class="z-sec">Últimos registros de horas</div>
+    ${ultimos.length ? ultimos.map(e=>`<div class="z-kv"><span>${formatDate(e.data)}</span><b>${e.quantidade}h <button class="icon-btn del" onclick="deleteHora('${t.id}','${e.id}');abrirFicha('${t.id}')">🗑️</button></b></div>`).join('') : '<div class="z-empty-s">Sem horas lançadas.</div>'}
+    <div class="z-sec">Pagamentos realizados</div>
+    ${pagos.length ? pagos.map(p=>`<div class="z-kv"><span>${formatDate(p.data)} · ${nomeMes(p.mes)}</span><b>${eur2(p.valor)}</b></div>`).join('') : '<div class="z-empty-s">Nenhum pagamento registrado.</div>'}`;
+  document.getElementById('fichaOv').classList.add('on');
+  document.getElementById('fichaDrawer').classList.add('on');
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') fecharFicha(); });
+
+/* ---------- HORAS & PAGAMENTOS ---------- */
+function filtrarHorasEmpresa(id){ window._horasEmpresaFiltro = id; render(); }
+function filtrarHorasLinhas(){
+  const q = (document.getElementById('buscaHorasInput').value||'').trim().toLowerCase();
+  document.querySelectorAll('#tabelaHoras tbody tr[data-busca]').forEach(tr => { tr.style.display = (!q || tr.dataset.busca.includes(q)) ? '' : 'none'; });
+}
+function irParaRelatorio(){
+  const d = document.getElementById('detalheRelatorio'); if (d){ d.open = true; d.scrollIntoView({behavior:'smooth', block:'start'}); }
+}
+function renderHoras(main){
+  const clienteAtivo = state.clientes.find(c=>c.id===clienteAtivoId);
+  const mes = mesReferenciaHoras();
+  const chip = window._horasEmpresaFiltro || '';
+  let trabs = trabalhadoresDoClienteAtivo().slice().sort((a,b)=>a.nome.localeCompare(b.nome));
+  if (chip) trabs = trabs.filter(t => (t.empresaId||'') === chip);
+  let devido = 0, pago = 0, horas = 0;
+  trabs.forEach(t => { devido += devidoNoMes(t, mes); pago += pagoNoMes(t, mes); horas += horasNoMes(t, mes); });
+  const falta = Math.max(0, devido - pago), pct = devido > 0 ? Math.min(100, Math.round(pago/devido*100)) : 0;
+
+  let html = cabecalhoPagina('Horas & Pagamentos', `${clienteAtivo ? clienteAtivo.nome : '—'} · pagamento vence dia 10 do mês seguinte`,
+    `<input type="month" class="z-month" value="${mes}" onchange="mudarMesReferencia(this.value)" title="Mês de referência"><button class="z-btn g" onclick="irParaRelatorio()">📊 Gerar relatório</button>`);
+  html += `<div class="z-grid z-g4">
+    ${kpiHTML('⏱️','Horas no mês', horas.toLocaleString('pt-PT') + 'h', nomeMes(mes))}
+    ${kpiHTML('💶','Total devido', eur2(devido), '')}
+    ${kpiHTML('✅','Já pago', eur2(pago), `<div class="z-bar"><i style="width:${pct}%"></i></div>${pct}% quitado`, 'var(--ok)')}
+    ${kpiHTML('⏳','Falta pagar', eur2(falta), falta > 0 ? 'ainda em aberto' : 'tudo quitado', falta > 0 ? 'var(--rust)' : 'var(--ok)')}
+  </div>`;
+  html += `<div class="z-toolbar"><div class="z-search"><span>🔍</span><input type="text" id="buscaHorasInput" oninput="filtrarHorasLinhas()" placeholder="Buscar trabalhador…" autocomplete="off"></div>${chipsEmpresasHTML(chip,'filtrarHorasEmpresa')}</div>`;
+  if (trabs.length === 0){ html += `<div class="empty">Nenhum trabalhador para mostrar.</div>`; }
+  else {
+    html += `<div class="z-tw"><table id="tabelaHoras"><thead><tr><th>Trabalhador</th><th>Horas</th><th>Valor/hora</th><th>Devido</th><th>Pago</th><th>Status</th><th></th></tr></thead><tbody>`;
+    trabs.forEach(t => {
+      const s = statusPgto(t, mes), h = horasNoMes(t, mes);
+      html += `<tr data-busca="${[t.nome, empresaNome(t.empresaId)].filter(Boolean).join(' ').toLowerCase().replace(/"/g,'&quot;')}">
+        <td><div class="z-who">${avatarHTML(t.nome)}<div><b>${t.nome}</b><small>${empresaNome(t.empresaId) || 'Sem empresa'}</small></div></div></td>
+        <td><b>${h}h</b>${h > LIMITE_HORAS_ALERTA ? ' <span class="z-pill warn">+200h</span>' : ''}</td>
+        <td><input class="z-rate" type="number" step="0.01" value="${t.valorHora||0}" onchange="updateValorHora('${t.id}', this.value)"></td>
+        <td><b>${eur2(s.devido)}</b></td><td>${eur2(s.pago)}</td>
+        <td><span class="z-pill ${s.cls}">${s.txt}</span></td>
+        <td class="z-acts"><button class="z-btn g s" onclick="openHoraForm('${t.id}','${mes}')">⏱️ Horas</button> <button class="z-btn p s" onclick="openPagamentoForm('${t.id}','${mes}')">💶 Pagamento</button></td></tr>`;
+    });
+    html += `<tr class="z-total"><td><b>Total</b></td><td><b>${horas.toLocaleString('pt-PT')}h</b></td><td></td><td><b>${eur2(devido)}</b></td><td><b>${eur2(pago)}</b></td><td></td><td></td></tr></tbody></table></div>`;
+  }
+  // gerador de relatório (card completo do sistema anterior, agora recolhido)
+  const fake = { innerHTML: '' };
+  try { renderHorasLegado(fake); } catch(e){ console.warn('relatório', e); }
+  const full = fake.innerHTML, ix = full.indexOf('📊 Relatório');
+  let relat = '';
+  if (ix > 0){
+    const ini = full.lastIndexOf('<div class="rh-card"', ix);
+    let fim = full.indexOf('<div class="rh-card"', ix);
+    if (fim < 0) fim = full.length;
+    relat = full.slice(ini, fim);
+  }
+  html += `<details id="detalheRelatorio" class="z-detalhe"><summary>📊 Relatório de horas e valores (para o contador / folha)</summary>${relat}</details>`;
+  main.innerHTML = html;
+}
+
 function gerarRelatorio(){
-  reportStart = document.getElementById('reportStartInput').value;
+  reportStart =document.getElementById('reportStartInput').value;
   reportEnd = document.getElementById('reportEndInput').value;
   reportShowHoras = document.getElementById('chkHoras').checked;
   reportShowValor = document.getElementById('chkValor').checked;
