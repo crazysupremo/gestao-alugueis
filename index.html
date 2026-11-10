@@ -3682,6 +3682,7 @@ function renderHoras(main){
     return;
   }
 
+  garantirTarefaPagamentoOutubro();
   const avisosPorTrabalhador = {};
   calcularAvisos().forEach(a => {
     if (!avisosPorTrabalhador[a.trab.id]) avisosPorTrabalhador[a.trab.id] = [];
@@ -3708,6 +3709,8 @@ function renderHoras(main){
       <div class="rh-stats">        <div class="stat"><div class="num">${horas.toLocaleString('pt-PT')}h${badge200Horas(horas)}</div><div class="lab">${cartoesModoVisualizacao==='mes' ? 'Horas do mês atual' : 'Total de horas (tudo)'}</div></div>
         <div class="stat"><div class="num">€${total.toLocaleString('pt-PT',{minimumFractionDigits:2, maximumFractionDigits:2})}</div><div class="lab">${cartoesModoVisualizacao==='mes' ? 'Valor do mês atual' : 'Total a pagar (tudo)'}</div></div>
       </div>
+
+      ${pagamentoResumoHTML(t)}
 
       <div class="rate-edit">
         <label style="font-size:12px;color:var(--ink-soft);">Valor/hora:</label>
@@ -3823,7 +3826,12 @@ function horasNoPeriodo(trab, start, end){
 // (registrado no momento em que a hora foi lançada) e só cai pro valor atual do trabalhador
 // se a entrada for antiga e não tiver esse dado salvo.
 function valorHoraEntrada(entrada, trab){
-  return (entrada.valorHora !== undefined && entrada.valorHora !== null && entrada.valorHora !== '')
+  // Empresa atual do trabalhador: o valor do cadastro manda (mudou lá, muda no relatório).
+  // Só em horas de OUTRA empresa vale o valor gravado no lançamento.
+  if (Number(trab.valorHora) > 0 && (entrada.empresaId || trab.empresaId || '') === (trab.empresaId || '')) {
+    return Number(trab.valorHora);
+  }
+  return(entrada.valorHora !== undefined && entrada.valorHora !== null && entrada.valorHora !== '')
     ? Number(entrada.valorHora) : Number(trab.valorHora || 0);
 }
 function empresaIdEntrada(entrada, trab){
@@ -4112,6 +4120,94 @@ function updateValorHora(trabId, value){
   render();
 }
 
+/* ---------------- PAGAMENTOS REALIZADOS ---------------- */
+const MESES_PT = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+function nomeMes(m){ const [y,mm] = m.split('-').map(Number); return `${MESES_PT[mm-1]}/${y}`; }
+function mesAnterior(){ const d = new Date(); d.setDate(1); d.setMonth(d.getMonth()-1); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); }
+function devidoNoMes(t, mes){
+  return (t.horas||[]).filter(h => (h.data||'').startsWith(mes)).reduce((a,h)=> a + Number(h.quantidade||0) * valorHoraEntrada(h, t), 0);
+}
+function pagoNoMes(t, mes){
+  return (t.pagamentos||[]).filter(p => p.mes === mes).reduce((a,p)=> a + Number(p.valor||0), 0);
+}
+const eur2 = v => '€' + Number(v).toLocaleString('pt-PT',{minimumFractionDigits:2, maximumFractionDigits:2});
+
+function pagamentoResumoHTML(t){
+  const mes = mesAnterior();
+  const devido = devidoNoMes(t, mes);
+  const pago = pagoNoMes(t, mes);
+  if (devido === 0 && pago === 0) return '';
+  const falta = devido - pago;
+  const quitado = falta <= 0.009;
+  const cor = quitado ? '#2E7D4F' : (pago > 0 ? '#8A6A0E' : 'var(--rust)');
+  const status = quitado ? '✓ Pago' : (pago > 0 ? `Falta ${eur2(falta)}` : 'Não pago');
+  return `<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:10px;padding:8px 12px;border:1px solid var(--line);border-radius:10px;font-size:12.5px;">
+    <span>💶 <b>${nomeMes(mes)}</b>: devido ${eur2(devido)} · pago ${eur2(pago)} · <b style="color:${cor};">${status}</b></span>
+    <button class="btn ghost" style="padding:4px 10px;font-size:12px;" onclick="openPagamentoForm('${t.id}')">Informar pagamento</button>
+  </div>`;
+}
+
+function openPagamentoForm(trabId, mes){
+  const t = state.trabalhadores.find(x=>x.id===trabId);
+  if (!t) return;
+  mes = mes || mesAnterior();
+  const devido = devidoNoMes(t, mes), pago = pagoNoMes(t, mes);
+  const falta = Math.max(0, devido - pago);
+  const hoje = dataLocalISO ? dataLocalISO(new Date()) : new Date().toISOString().slice(0,10);
+  const lista = (t.pagamentos||[]).slice().sort((a,b)=> a.data < b.data ? 1 : -1).map(p =>
+    `<div class="entry-row"><span class="e-info">${formatDate(p.data)} · ${nomeMes(p.mes)}</span><span><b>${eur2(p.valor)}</b> <button class="icon-btn del" onclick="removerPagamento('${t.id}','${p.id}')">🗑️</button></span></div>`).join('');
+  const modalEl = document.getElementById('modalBody');
+  modalEl.className = 'modal';
+  modalEl.innerHTML = `
+    <h3>Pagamento realizado — ${t.nome}</h3>
+    <div class="field"><label>Mês de referência</label><input type="month" id="pg_mes" value="${mes}" onchange="openPagamentoForm('${t.id}', this.value)"></div>
+    <div style="font-size:12.5px;color:var(--ink-soft);margin-bottom:12px;">Devido: <b>${eur2(devido)}</b> · já pago: <b>${eur2(pago)}</b> · falta: <b>${eur2(falta)}</b></div>
+    <div class="field"><label>Valor pago agora (€)</label><input type="number" step="0.01" id="pg_valor" value="${falta ? falta.toFixed(2) : ''}"></div>
+    <div class="field"><label>Data do pagamento</label><input type="date" id="pg_data" value="${hoje}"></div>
+    ${lista ? `<div class="entries" style="display:block;margin-bottom:10px;">${lista}</div>` : ''}
+    <div class="modal-actions">
+      <button class="btn ghost" onclick="closeModal()">Fechar</button>
+      <button class="btn" onclick="salvarPagamento('${t.id}')">Salvar pagamento</button>
+    </div>`;
+  showModal();
+}
+function salvarPagamento(trabId){
+  const t = state.trabalhadores.find(x=>x.id===trabId);
+  if (!t) return;
+  const valor = Number(document.getElementById('pg_valor').value);
+  const mes = document.getElementById('pg_mes').value;
+  const data = document.getElementById('pg_data').value;
+  if (!valor || valor <= 0){ alert('Informe o valor pago.'); return; }
+  if (!mes || !data){ alert('Informe o mês e a data.'); return; }
+  if (!t.pagamentos) t.pagamentos = [];
+  t.pagamentos.push({ id: uid(), mes, valor, data });
+  persist('trabalhadores');
+  closeModal();
+  render();
+  showToast(`✓ Pagamento de ${eur2(valor)} registrado`, false, 2000);
+}
+function removerPagamento(trabId, pid){
+  const t = state.trabalhadores.find(x=>x.id===trabId);
+  if (!t) return;
+  t.pagamentos = (t.pagamentos||[]).filter(p => p.id !== pid);
+  persist('trabalhadores');
+  openPagamentoForm(trabId);
+  render();
+}
+
+// Lembrete na lista de tarefas: pagamento da folha de outubro/2026, vence 10/11/2026 (criado uma vez só).
+function garantirTarefaPagamentoOutubro(){
+  try {
+    if (!clienteAtivoId || localStorage.getItem('zv_tarefa_pg_out26')) return;
+    if (!state.tarefas) state.tarefas = [];
+    if (!state.tarefas.some(x => (x.titulo||'').includes('folha de outubro/2026') && x.clienteId === clienteAtivoId)){
+      state.tarefas.push({ id: uid(), titulo: 'Pagar folha de outubro/2026 (trabalhadores) — vence 10/11', data: '2026-11-10', concluida: false, clienteId: clienteAtivoId });
+      persist('tarefas');
+    }
+    localStorage.setItem('zv_tarefa_pg_out26', '1');
+  } catch(e){}
+}
+
 // Quando o valor/hora do cadastro muda, as horas já lançadas (da empresa atual) acompanham.
 function aplicarValorNasHoras(t, valor){
   const v = Number(valor) || 0;
@@ -4257,6 +4353,8 @@ function saveMonthHoras(trabId, month, empresaId, valorHora, manterModalAberto){
 
   const empresaAlvo = empresaId || '';
   const valor = valorHora !== '' && valorHora !== undefined && valorHora !== null ? Number(valorHora) : (t.valorHora || 0);
+  // valor alterado na empresa atual do trabalhador → atualiza o cadastro (e o relatório)
+  if (valor > 0 && empresaAlvo === (t.empresaId || '')) { t.valorHora = valor; aplicarValorNasHoras(t, valor); }
 
   // remove só as entradas desse mês QUE SÃO DESSA EMPRESA (lançamentos antigos sem empresa
   // salva contam como sendo da empresa atual do trabalhador) — assim não apaga os dias de
